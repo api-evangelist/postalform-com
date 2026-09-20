@@ -1,0 +1,193 @@
+generated: '2026-09-19'
+method: probed
+source: https://postalform.com/.well-known/agent-card.json
+card:
+  file: a2a/postalform-com-agent-card.json
+discovery:
+  path: /.well-known/agent-card.json
+  canonical: true
+  host: postalform.com
+  note: >-
+    Served from the apex host, which is also the OpenAPI servers[] host, the MCP host (https://postalform.com/mcp)
+    and the declared A2A JSON-RPC host (https://postalform.com/a2a). The legacy /.well-known/agent.json path
+    serves a byte-identical copy (3,417 bytes, cmp identical). www.postalform.com answers 200 for
+    /.well-known/agent-card.json directly rather than redirecting. A negative-control path
+    (/.well-known/apievangelist-negative-control-7f3a9c.json) returns 404 text/html, and every unserved
+    /.well-known/* path (security.txt, openid-configuration, oauth-authorization-server,
+    oauth-protected-resource) also 404s, so the 200 on agent-card.json is a served document and not an SPA
+    catch-all. Ownership is not in question: provider.organization is "PostalForm" with provider.url
+    https://postalform.com, the OpenAPI at the same host titles itself "PostalForm Machine Payments API", the
+    card's resources block points at https://postalform.com/openapi.json and https://postalform.com/mcp, and
+    the Terms of Service name the operator (MindBike Technologies LLC).
+x-evidence:
+  fetched: '2026-09-19'
+  url: https://postalform.com/.well-known/agent-card.json
+  http_status: 200
+  content_type: application/json; charset=utf-8
+  body_bytes: 3417
+  response_headers_of_note:
+    a2a-version: '1.0'
+    cache-control: public, max-age=3600
+    access-control-allow-origin: '*'
+    access-control-allow-headers: Content-Type, A2A-Version
+    strict-transport-security: max-age=15552000
+  body_parses_as: JSON object with AgentCard shape (protocolVersion, name, description, url, preferredTransport, version, provider, capabilities, skills, supportedInterfaces, additionalInterfaces, defaultInputModes, defaultOutputModes, securitySchemes, security)
+  corroborating_probes:
+  - url: https://postalform.com/.well-known/agent.json
+    http_status: 200
+    note: Legacy pre-0.3 path. Byte-identical to agent-card.json.
+  - url: https://www.postalform.com/.well-known/agent-card.json
+    http_status: 200
+    note: Served directly on the www host (the www root itself 301s to the apex).
+  - url: https://projects.postalform.com/.well-known/agent-card.json
+    http_status: 404
+    note: The Projects API host serves a real JSON 404 ({"error":"Not found"}, 21 bytes); no card there.
+  - url: https://postalform.com/a2a
+    method: GET
+    http_status: 200
+    content_type: application/json
+    note: GET on the declared JSON-RPC endpoint returns the agent card itself (3,417 bytes). The developers page calls this the "A2A JSON-RPC discovery bridge".
+  - url: https://postalform.com/a2a
+    method: POST
+    body: '{"jsonrpc":"2.0","id":1,"method":"tasks/get","params":{"id":"apievangelist-nonexistent-probe"}}'
+    http_status: 200
+    response: '{"jsonrpc":"2.0","error":{"code":-32601,"message":"Method not found: tasks/get"},"id":1}'
+    note: >-
+      A JSON-RPC 2.0 responder is present, but tasks/get — an A2A-defined method — is not implemented
+      (-32601 Method not found rather than the A2A -32001 TaskNotFoundError). message/send was deliberately
+      NOT probed because it could create a draft or task on the provider's side.
+  - url: https://postalform.com/a2a
+    method: POST
+    body: '{"jsonrpc":"2.0","id":2,"method":"agent/getAuthenticatedExtendedCard","params":{}}'
+    http_status: 200
+    response: '{"jsonrpc":"2.0","error":{"code":-32601,"message":"Method not found: agent/getAuthenticatedExtendedCard"},"id":2}'
+    note: Consistent with supportsAuthenticatedExtendedCard false and capabilities.extendedAgentCard false.
+  - url: https://postalform.com/.well-known/api-catalog
+    http_status: 200
+    note: The RFC 9727 api-catalog linkset lists the agent card (and agent.json) as service-desc for the https://postalform.com/a2a anchor.
+  - url: https://a2aregistry.org
+    note: The card was first seen among the agents listed on a2aregistry.org (harvest source a2a-registry, 2026-09-19); the card above was fetched directly from the provider's host.
+agent_card:
+  name: PostalForm
+  description: >-
+    PostalForm helps AI agents create reviewable physical-mail drafts and, when explicitly authorized, pay for
+    print-and-mail orders through MCP, hosted checkout, MPP, or x402.
+  url: https://postalform.com/a2a
+  version: 0.1.0
+  protocol_version: '1.0'
+  preferred_transport: JSONRPC
+  supported_interfaces:
+  - {url: 'https://postalform.com/a2a', protocolBinding: JSONRPC, protocolVersion: '1.0'}
+  additional_interfaces:
+  - {url: 'https://postalform.com/a2a', transport: JSONRPC, protocolVersion: '1.0'}
+  provider:
+    organization: PostalForm
+    url: https://postalform.com
+  documentation_url: https://postalform.com/agents
+  icon_url: https://postalform.com/og/default.png
+  supports_authenticated_extended_card: false
+  capabilities:
+    streaming: false
+    push_notifications: false
+    state_transition_history: false
+    extended_agent_card: false
+    extensions:
+    - uri: https://postalform.com/.well-known/x402
+      description: x402 machine-payment discovery for PostalForm machine orders.
+      required: false
+    - uri: https://postalform.com/.well-known/ucp
+      description: UCP shopping profile for PostalForm checkout and commerce discovery.
+      required: false
+  default_input_modes: [text/plain, application/json]
+  default_output_modes: [text/plain, application/json]
+  security_schemes: {}
+  security: []
+  skill_count: 3
+  skills:
+  - {id: postalform_mcp_connector_guidance, name: Connect an agent to PostalForm MCP, tags: [mcp, agent setup, postal mail, print and mail, developer tools]}
+  - {id: postalform_mail_draft_planning, name: Plan a reviewable physical-mail draft, tags: [pdf mailing, letters, workflow forms, hosted checkout, mail drafts]}
+  - {id: postalform_machine_payment_planning, name: Plan an authorized machine-paid mail order, tags: [x402, mpp, machine payments, agentic commerce, mail fulfillment]}
+  skill_invocation: >-
+    Each skill carries examples[] phrased as questions ("How should my agent connect to PostalForm?", "Which
+    endpoint validates a machine-paid mail order before payment?") with text/plain and application/json
+    input/output modes. The skills are GUIDANCE skills — they return the MCP endpoint, the draft path, or the
+    machine-payment plan — rather than the mail-creating actions themselves, which live on the MCP server
+    (12 tools) and the REST machine-payments API (17 operations). See mcp/postalform-com-tool-crosswalk.yml.
+  non_standard_fields:
+    resources:
+      mcpEndpoint: https://postalform.com/mcp
+      skill: https://postalform.com/skill.md
+      agentsGuide: https://postalform.com/agents
+      developersGuide: https://postalform.com/developers
+      openapi: https://postalform.com/openapi.json
+      x402: https://postalform.com/.well-known/x402
+    securityRequirements: []
+conformance:
+  spec: A2A 1.0.0
+  grade: conformant
+  protocol_version: '1.0'
+  preferred_transport: JSONRPC
+  hard_checks:
+    capabilities_is_object: true
+    protocol_version_present: true
+    skills_is_array: true
+  optional_fields:
+    default_input_modes: true
+    default_output_modes: true
+    preferred_transport: true
+  grade_basis: >-
+    Graded against the A2A 1.0.0 hard checks. capabilities is an OBJECT (pass) carrying streaming,
+    pushNotifications, stateTransitionHistory, extendedAgentCard and an extensions[] array. protocolVersion
+    is present at the top level (pass), declared as "1.0", and the server echoes it in an a2a-version: 1.0
+    response header. skills is an ARRAY (pass) of three fully-populated skills, each with id, name,
+    description, tags, examples, inputModes and outputModes. All three optional discriminators are present:
+    preferredTransport (JSONRPC), defaultInputModes and defaultOutputModes. The card carries BOTH the 1.0.0
+    supportedInterfaces[] block (with protocolBinding) AND the 0.3-era top-level url + preferredTransport +
+    additionalInterfaces[] triple, so it reads correctly under either revision.
+  deviations:
+  - field: JSON-RPC endpoint behaviour (https://postalform.com/a2a)
+    observed: GET returns the agent card; POST tasks/get returns -32601 Method not found
+    note: >-
+      The card declares a JSONRPC interface at /a2a, but the A2A task methods are not implemented there —
+      the provider describes /a2a as a "discovery bridge". An A2A client that reads this card and calls
+      tasks/get gets a JSON-RPC method-not-found error, not an A2A task error. message/send was not probed
+      (side effects). Recorded as a deviation of the SERVED surface, not of the card's shape; the executable
+      agent surface is the MCP server the card's resources.mcpEndpoint points at.
+  - field: securitySchemes / security
+    observed: '{} and [] (declared, but empty)'
+    note: >-
+      The card declares no authentication scheme. That matches the MCP server (no credential required) and
+      the machine-payments REST API, where payment (HTTP 402 x402 or MPP challenge) rather than a credential
+      gates the paid actions. An agent cannot learn from securitySchemes that payment is the gate; it has to
+      read the extensions[] URIs and the documentation.
+  - field: resources, securityRequirements
+    observed: present
+    note: >-
+      Not A2A 1.0.0 fields. resources is a useful provider extension (MCP endpoint, skill file, OpenAPI, x402
+      manifest); securityRequirements duplicates the empty security[] under a non-standard name.
+  - field: skills[]
+    observed: three guidance skills, no action skills
+    note: >-
+      The skills explain how to connect and plan; none of them creates, pays for or tracks a mailing. The
+      actions are on MCP (postalform.create_*_order_draft, postalform.create_machine_order,
+      complete_checkout, postalform.get_order_status) and REST (createMachineOrder, createMppMachineOrder,
+      getMachineOrder ...). A directory that indexes A2A skills as capabilities will under-represent what
+      PostalForm can do.
+  - field: capabilities.extensions[]
+    observed: x402 and UCP discovery URIs, both required false
+    note: >-
+      The extension URIs point at the provider's own discovery documents (/.well-known/x402 version 2, and
+      /.well-known/ucp declaring dev.ucp.shopping.checkout 2026-01-11) rather than at a registered A2A
+      extension specification such as the a2a-x402 extension URI. Both documents are live and saved under
+      well-known/.
+surface_relationship:
+  note: >-
+    PostalForm publishes five agent-facing surfaces on one host and they are projections of one order
+    pipeline: (1) A2A — this card plus a discovery bridge at /a2a; (2) MCP — 12 tools at
+    https://postalform.com/mcp answering initialize and tools/list anonymously (mcp/postalform-com-mcp.yml);
+    (3) REST — the 17-operation PostalForm Machine Payments API at https://postalform.com/api/machine/*
+    (x402 and MPP 402 flows); (4) UCP checkout over MCP at /ucp/mcp and ACP checkout at /acp/mcp, declared in
+    /.well-known/ucp and /.well-known/acp.json; (5) an RFC 9727 api-catalog linkset tying them together.
+    A separate API-key product, PostalForm Projects (https://projects.postalform.com/api/v1, 25 operations,
+    bearer pf_test_/pf_live_ keys, Idempotency-Key, signed webhooks), serves server-side developers rather
+    than agents. See mcp/postalform-com-tool-crosswalk.yml for the tool-to-operation binding.

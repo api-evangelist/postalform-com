@@ -1,0 +1,116 @@
+generated: '2026-09-19'
+method: derived
+source: >-
+  Derived by binding the LIVE MCP tools/list (12 tools, mcp/postalform-com-mcp-tools.json, fetched
+  anonymously 2026-09-19) to the provider's two OpenAPI 3.1.0 contracts: the PostalForm Machine Payments API
+  (openapi/postalform-com-machine-payments-openapi.json, 17 operations, https://postalform.com) and the
+  PostalForm Projects Public API (openapi/postalform-com-projects-openapi.json, 25 operations,
+  https://projects.postalform.com). Bindings are named by operationId and were checked against the specs;
+  where the provider's developers page states the mapping ("Use postalform.create_machine_order or the machine
+  REST endpoints") confidence is high, where it is semantic only it is marked medium or low.
+purpose: >-
+  PostalForm's MCP server and its REST contracts are OVERLAPPING projections of one order pipeline, and neither
+  is a superset: the MCP server carries the hosted-checkout draft path (create a reviewable unpaid draft,
+  return a checkout_url) which has NO public REST operation, while the REST machine-payments API carries the
+  flower-letter and shipping-label products which have no MCP tool. The Projects API is a third projection —
+  same fulfillment pipeline, but API-key authenticated, prepaid-credit funded, with quotes, Idempotency-Key
+  and signed webhooks — and shares no operation with the MCP server at all.
+surfaces:
+  rest_machine_payments: openapi/postalform-com-machine-payments-openapi.json   # 17 ops, no auth, 402 x402/MPP gating; provider-hosted at https://postalform.com/openapi.json
+  rest_projects: openapi/postalform-com-projects-openapi.json                  # 25 ops, bearer pf_test_/pf_live_ keys; provider-hosted at https://projects.postalform.com/openapi.json
+  mcp: https://postalform.com/mcp                                              # 12 tools, tools/list open (not gated)
+  mcp_ucp: https://postalform.com/ucp/mcp                                      # UCP checkout binding; 5 documented tools, not enumerated live (needs _meta.ucp.profile)
+  a2a: https://postalform.com/a2a                                              # discovery bridge; 3 guidance skills, no action skills
+crosswalk:
+- tool: postalform.list_forms
+  category: forms
+  rest: [listMachineForms]
+  binding: rest
+  confidence: high
+  note: Same q / limit / cursor parameters and the same forms[] + next_cursor response shape (MachineWorkflowFormListResponse).
+- tool: postalform.get_form_schema
+  category: forms
+  rest: [getMachineFormSchema]
+  binding: rest
+  confidence: high
+  note: slug path parameter; MachineWorkflowFormSchema response. The tool's outputSchema (schema_version, workflow_version, fields, groups, attachments, dependencies) is richer than the spec's empty MachineWorkflowFormSchema object.
+- tool: postalform.create_machine_order
+  category: machine-order
+  rest: [validateMachineOrder, createMachineOrder, validateMppMachineOrder, createMppMachineOrder]
+  binding: rest
+  confidence: high
+  note: >-
+    payment_protocol selects the family: x402 -> POST /api/machine/orders (createMachineOrder, PAYMENT-REQUIRED /
+    PAYMENT-SIGNATURE), mpp -> POST /api/machine/mpp/orders (createMppMachineOrder, WWW-Authenticate: Payment /
+    Authorization: Payment). The tool's inputSchema is the MachineOrderRequest body (request_id, buyer_name,
+    buyer_email, pdf | letter | form, sender/recipient address strategies, print options, mailpiece_type,
+    postcard_size) plus the two retry credentials. The developers page states the equivalence directly.
+- tool: postalform.get_order_status
+  category: status
+  rest: [getMachineOrder, getMppMachineOrder]
+  binding: rest
+  confidence: medium
+  note: >-
+    For machine orders the tool reads the same order the REST status endpoints return (MachineOrderStatus:
+    status, payment_status, is_paid, tracking_number, err_* return-receipt fields). The tool ALSO reads
+    hosted-checkout drafts created by the draft tools, which have no REST status operation, so it is broader
+    than either REST op. The Projects getLetter / getPostcard operations read a different order store
+    (workspace orders) and are not bound.
+mcp_only:
+- tool: postalform.search_addresses
+  reason: Loqate address autocomplete. No operation in either OpenAPI; the REST machine API accepts a Loqate id (*_address_id) but publishes no lookup route.
+- tool: postalform.create_pdf_upload
+  reason: Mints a short-lived upload URL + upload_token. The machine API's pdf.upload_token field says "Get this from PostalForm PDF upload tooling" but declares no route. The Projects API has its own two-step upload (createUploadIntent, completeDocumentUpload) under API-key auth — a different token space, not bound.
+- tool: postalform.create_order_draft
+  reason: Hosted-checkout draft from a PDF — returns order_id, price_usd, checkout_url and an ACP checkout_session. No public REST operation creates a hosted-checkout draft; the machine API creates orders only under a 402 payment challenge. The semantic analogue on Projects is createLetterQuote + createLetter (API key, prepaid credits) — confidence low, not bound.
+- tool: postalform.preview_letter_order_draft
+  reason: Non-writing render + address validation returning a widget. No REST equivalent; the nearest is validateMachineOrder, which quotes but does not render a widget.
+- tool: postalform.create_letter_order_draft
+  reason: Hosted-checkout draft from letter text (server-rendered PDF, optional typed/drawn signature). No public REST operation.
+- tool: postalform.create_form_order_draft
+  reason: Hosted-checkout draft from a workflow-form payload. No public REST operation (the machine API takes a form object only on the 402-gated create endpoints).
+- tool: complete_checkout
+  reason: Pays an existing ACP checkout_session with a Stripe shared payment token (spt_...). Not in either OpenAPI. Its protocol siblings are the UCP complete_checkout tool on /ucp/mcp and the ACP checkout service on /acp/mcp.
+- tool: postalform.ping
+  reason: MCP-level health check. The REST analogue is GET https://postalform.com/api/health (a component health JSON that answered 503 "degraded" at probe time), which is not in the OpenAPI.
+rest_only:
+- operation: validateMachineOrder
+  reason: Free quote/validation for the x402 family. Exercised implicitly by postalform.create_machine_order but not exposed as a standalone tool.
+- operation: validateMppMachineOrder
+  reason: Free quote/validation for the MPP family; same as above.
+- operation: validateMachineFlowerLetter
+  reason: Flower-letter product (Florist One arrangement + card note) — no MCP tool.
+- operation: createMachineFlowerLetter
+  reason: Flower-letter product — no MCP tool.
+- operation: getMachineFlowerLetter
+  reason: Flower-letter product — no MCP tool.
+- operation: validateMppMachineFlowerLetter
+  reason: Flower-letter product (MPP) — no MCP tool.
+- operation: createMppMachineFlowerLetter
+  reason: Flower-letter product (MPP) — no MCP tool.
+- operation: getMppMachineFlowerLetter
+  reason: Flower-letter product (MPP) — no MCP tool.
+- operation: validateMppShippingLabel
+  reason: MPP-only domestic parcel shipping labels (live carrier rates) — no MCP tool.
+- operation: createMppShippingLabel
+  reason: MPP-only shipping label purchase returning a signed PDF — no MCP tool.
+- operation: getMppShippingLabel
+  reason: MPP-only shipping label status/download — no MCP tool.
+- operation: 'PostalForm Projects Public API (all 25 operations: createUploadIntent, completeDocumentUpload, createLetterQuote, createLetter, getLetter, getLetterDocument, getLetterReturnReceipt, exportReturnReceipts, createPostcardQuote, createPostcard, getPostcard, getPostcardDocument, listWebhookEndpoints, createWebhookEndpoint, disableWebhookEndpoint, rotateWebhookEndpointSecret, listWebhookEvents, replayWebhookEvent, getCreditBalance, listPaymentMethods, createPaymentMethodSetupSession, getCreditAutoRefillPolicies, configureCreditAutoRefill, listCreditLedger, listApiKeys, rotateApiKey, createCreditCheckoutSession)'
+  reason: A separate API-key product for server-side integrations (workspaces, test/live modes, prepaid credits, signed webhooks). No MCP tool touches it; the MCP initialize instructions only point developers at https://projects.postalform.com to provision it.
+coverage:
+  mcp_tools: 12
+  mcp_tools_bound_to_rest: 4
+  mcp_only: 8
+  rest_machine_operations: 17
+  rest_machine_operations_bound: 6
+  rest_machine_only: 11
+  rest_projects_operations: 25
+  rest_projects_operations_bound: 0
+  a2a_skills: 3
+  a2a_skills_bound: 0
+  note: >-
+    Four MCP tools bind to six machine-API operations; eight tools have no public REST contract because the
+    hosted-checkout draft path exists only on MCP; eleven machine-API operations (flowers, shipping labels,
+    standalone validate) have no tool; the Projects API is unbound by design. The A2A skills are guidance
+    only and bind to nothing executable.

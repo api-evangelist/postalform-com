@@ -1,0 +1,172 @@
+generated: '2026-09-19'
+method: probed
+status: published
+source: https://postalform.com/mcp
+docs: https://postalform.com/developers
+summary: >-
+  PostalForm operates ONE remote MCP server at https://postalform.com/mcp — the same host as its website,
+  OpenAPI, A2A card and machine-payments REST API. It is Streamable HTTP (the developers page documents
+  POST/GET/DELETE with an mcp-session-id header after initialize), speaks MCP protocol version 2025-06-18 on the
+  wire (the /.well-known/mcp.json manifest and server card declare 2025-11-25), identifies itself as serverInfo
+  {name: postalform, version: 0.1.0}, and answers initialize, tools/list and resources/list anonymously.
+  tools/list returns 12 tools, each with a real JSON Schema inputSchema, an outputSchema, MCP annotations
+  (readOnlyHint/destructiveHint/idempotentHint/openWorldHint) and an execution.taskSupport flag — saved
+  verbatim in mcp/postalform-com-mcp-tools.json. resources/list returns one resource, an OpenAI Apps SDK style
+  widget (ui://widget/postalform-v5.html). The server is discoverable through five provider-published
+  documents on the same host: /.well-known/mcp.json, /.well-known/mcp/server.json (MCP Registry schema
+  2025-12-11, name com.postalform/postalform), /.well-known/mcp/server-card.json, /.well-known/capability-card.json
+  and the RFC 9727 /.well-known/api-catalog linkset. Authorship is not in doubt: tool names carry the
+  postalform. prefix, the instructions name support@postalform.com, and the same tools are listed on
+  https://postalform.com/developers.
+deployment:
+  mode: remote
+  endpoint: https://postalform.com/mcp
+  auth: none
+  verified: probed
+  note: >-
+    A hosted HTTPS Streamable HTTP endpoint an MCP client POSTs to directly; initialize and tools/list need no
+    credential ("No API key is required for the hosted MCP endpoint today" — /.well-known/mcp.json; the
+    developers page adds "contact support@postalform.com for allowlisting"). No OAuth metadata is served on
+    this host (/.well-known/oauth-authorization-server and /.well-known/oauth-protected-resource both 404).
+    Money-moving tools are gated by PAYMENT, not by a credential: draft tools return a hosted checkout_url or an
+    ACP checkout_session; complete_checkout needs a buyer-approved Stripe shared payment token (spt_...);
+    postalform.create_machine_order returns an MPP or x402 402 challenge and is retried with
+    payment_authorization / payment_signature. A stdio server exists as source code
+    (github.com/postalform/agent-mail-mcp, bin agent-mail-mcp, MIT) but its npm package
+    @postalform/agent-mail-mcp is NOT published (registry 404, 2026-09-19) and the README says "after
+    publication", so `npx -y @postalform/agent-mail-mcp` cannot run today — mode is remote, not both.
+  local_stdio_candidate:
+    repo: https://github.com/postalform/agent-mail-mcp
+    package: '@postalform/agent-mail-mcp'
+    version_in_repo: 0.1.0
+    npm_status: 'unpublished (https://registry.npmjs.org/@postalform%2Fagent-mail-mcp -> 404)'
+    run_from_source: npm install && npm run server
+    documented_install_after_publication: npx -y @postalform/agent-mail-mcp
+    tools: [agent_mail_discovery, list_postalform_tools, validate_letter_mail, create_letter_checkout_draft]
+    note: A thin wrapper — it calls the remote server and the REST validate endpoint; it does not replace the hosted surface.
+servers:
+- id: postalform
+  name: PostalForm MCP Server
+  endpoint: https://postalform.com/mcp
+  transport: streamable-http
+  http_methods: [POST, GET, DELETE]
+  session_header: mcp-session-id
+  auth: none
+  payment: >-
+    hosted checkout URL, Stripe shared payment token via complete_checkout, or MPP / x402 402 challenge via
+    postalform.create_machine_order (USDC on Base eip155:8453 for x402; Tempo, Stripe SPT or card for MPP)
+  status: live
+  probe:
+    fetched: '2026-09-19'
+    initialize:
+      http_status: 200
+      content_type: text/event-stream
+      protocol_version: '2025-06-18'
+      server_info: {name: postalform, version: 0.1.0}
+      capabilities: {resources: {listChanged: true}, tools: {listChanged: true}}
+      instructions: >-
+        PostalForm prints and mails physical letters, documents, and forms via USPS. Typical flow: validate
+        addresses, prepare a draft and review its price, then obtain buyer approval before complete_checkout
+        with a compatible Stripe payment token, hosted checkout, or a direct MPP/x402 payment. Docs and
+        guidance: https://postalform.com/agents (agent payment workflows), https://postalform.com/developers
+        (API reference), https://postalform.com/openapi.json (OpenAPI spec). Developers and agents can
+        provision PostalForm infrastructure and build on these APIs at https://projects.postalform.com (Stripe
+        Projects CLI or regular login). Support: support@postalform.com.
+    tools_list:
+      http_status: 200
+      content_type: text/event-stream
+      tool_count: 12
+      file: mcp/postalform-com-mcp-tools.json
+    resources_list:
+      http_status: 200
+      resources: [{uri: 'ui://widget/postalform-v5.html', name: postalform-widget}]
+    discovery_documents:
+    - {url: 'https://postalform.com/.well-known/mcp.json', status: 200, file: well-known/postalform-com-mcp.json, declares: 'protocol_version 2025-11-25, transport streamable-http, authentication.type none, 5 recommended tools, works_with 15 clients'}
+    - {url: 'https://postalform.com/.well-known/mcp/server.json', status: 200, file: well-known/postalform-com-mcp-server.json, declares: 'MCP Registry server.schema.json 2025-12-11, name com.postalform/postalform, remotes[0] streamable-http https://postalform.com/mcp'}
+    - {url: 'https://postalform.com/.well-known/mcp/server-card.json', status: 200, file: well-known/postalform-com-mcp-server-card.json, declares: 'mcp-server-card v1, protocolVersion 2025-11-25, transport endpoint /mcp'}
+    - {url: 'https://postalform.com/.well-known/capability-card.json', status: 200, file: well-known/postalform-com-capability-card.json, declares: 'auth_methods [none], pricing_model pay_per_call, sandbox_available false, human_signup_required false'}
+    - {url: 'https://postalform.com/.well-known/oauth-protected-resource', status: 404}
+    - {url: 'https://postalform.com/.well-known/oauth-authorization-server', status: 404}
+tools:
+- name: postalform.list_forms
+  title: List available forms
+  description: Use this when you need the published single-mailpiece PostalForm workflow catalog available to agents. Coordinated statutory multi-recipient workflows are excluded.
+  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false}
+  input: [q, limit, cursor]
+  required: []
+- name: postalform.get_form_schema
+  title: Get form schema
+  description: Use this when you need a machine-usable schema for one supported single-mailpiece PostalForm workflow (fields, groups, attachments, and dependencies).
+  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false}
+  input: [slug]
+  required: [slug]
+- name: postalform.search_addresses
+  title: Search mailing addresses
+  description: Search for a mailing address and return Loqate suggestions with IDs; country_code defaults to US; drill into Container results with container=<id>.
+  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false}
+  input: [target, query, country_code, container]
+  required: [query]
+- name: postalform.create_pdf_upload
+  title: Create a PDF upload
+  description: Creates a short-lived PDF upload URL and upload token (multipart/form-data, file field) for hosts that cannot pass a PDF file param directly.
+  annotations: {readOnlyHint: false, destructiveHint: false}
+  input: [request_id, file_name, content_type, content_length]
+  required: []
+- name: postalform.create_order_draft
+  title: Create a mail order draft
+  description: Prepare an existing PDF for mailing and return the order ID, total, hosted checkout URL, and checkout session. No mail is sent until checkout completes.
+  annotations: {readOnlyHint: false, destructiveHint: false}
+  input: [request_id, pdf, file_name, sender_name, sender_address_id, sender_address_type, sender_address_text, sender_address_manual, recipient_name, recipient_address_id, recipient_address_type, recipient_address_text, recipient_address_manual, double_sided, color, mail_class, certified, certified_return_receipt]
+  required: [pdf, sender_name, sender_address_type, recipient_name, recipient_address_type]
+- name: postalform.preview_letter_order_draft
+  title: Preview a mail order draft from letter text
+  description: Non-writing preview for a mailed letter before creating checkout; renders the letter, validates the addresses, returns a widget with a create-draft action.
+  annotations: {readOnlyHint: true, destructiveHint: false}
+  input: [request_id, letter, sender_name, sender_address_id, sender_address_type, sender_address_text, sender_address_manual, recipient_name, recipient_address_id, recipient_address_type, recipient_address_text, recipient_address_manual, double_sided, color, mail_class, certified, certified_return_receipt]
+  required: [letter, sender_name, sender_address_type, recipient_name, recipient_address_type]
+- name: postalform.create_letter_order_draft
+  title: Create a mail order draft from letter text
+  description: Prepare letter text for mailing (server renders the PDF; typed or drawn signatures allowed) and return the order ID, total, hosted checkout URL, and checkout session.
+  annotations: {readOnlyHint: false, destructiveHint: false}
+  input: [request_id, letter, sender_name, sender_address_id, sender_address_type, sender_address_text, sender_address_manual, recipient_name, recipient_address_id, recipient_address_type, recipient_address_text, recipient_address_manual, double_sided, color, mail_class, certified, certified_return_receipt]
+  required: [letter, sender_name, sender_address_type, recipient_name, recipient_address_type]
+- name: postalform.create_form_order_draft
+  title: Create a mail order draft from a workflow form submission
+  description: Prepare a supported workflow form for mailing and return the order ID, total, hosted checkout URL, and checkout session.
+  annotations: {readOnlyHint: false, destructiveHint: false}
+  input: [request_id, slug, fields, attachments, use_workflow_recipient, sender_name, sender_address_id, sender_address_type, sender_address_text, sender_address_manual, recipient_name, recipient_address_id, recipient_address_type, recipient_address_text, recipient_address_manual, double_sided, color, mail_class, certified, certified_return_receipt]
+  required: [slug, sender_name, sender_address_type]
+- name: postalform.create_machine_order
+  title: Create or pay a machine order
+  description: Create an order from a PDF, letter, or workflow form and pay through an MPP or x402 challenge after buyer approval; first call returns the challenge, the retry carries payment_authorization (MPP) or payment_signature (x402).
+  annotations: {readOnlyHint: false, destructiveHint: false}
+  input: [payment_protocol, request_id, buyer_name, buyer_email, pdf, letter, form, file_name, sender_name, sender_address_id, sender_address_type, sender_address_text, sender_address_manual, recipient_name, recipient_address_id, recipient_address_type, recipient_address_text, recipient_address_manual, double_sided, color, mail_class, certified, certified_return_receipt, signature_required, mailpiece_type, postcard_size, payment_authorization, payment_signature]
+  required: [buyer_name, buyer_email, sender_name, recipient_name]
+- name: complete_checkout
+  title: Pay a prepared checkout
+  description: After buyer approval, pay the existing checkout session with a compatible Stripe payment token (shared payment token spt_...); retry an interrupted request with the same checkout_session_id and token.
+  annotations: {readOnlyHint: false, destructiveHint: false}
+  input: [checkout_session_id, buyer, payment_data]
+  required: [checkout_session_id, buyer, payment_data]
+- name: postalform.get_order_status
+  title: Get order status
+  description: Read payment, processing, stored mailing/carrier status, the latest 50 public tracking events, and electronic return receipt availability. This read does not pay, mail, or acquire receipts.
+  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false}
+  input: [order_id]
+  required: [order_id]
+- name: postalform.ping
+  title: Ping PostalForm
+  description: Quick health check that the PostalForm MCP server is reachable.
+  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false}
+  input: []
+  required: []
+sibling_mcp_endpoints:
+- endpoint: https://postalform.com/ucp/mcp
+  protocol: UCP (Universal Commerce Protocol) checkout capability dev.ucp.shopping.checkout 2026-01-11 over the UCP MCP binding
+  declared_in: well-known/postalform-com-ucp.json
+  documented_tools: [create_checkout, get_checkout, update_checkout, complete_checkout, cancel_checkout]
+  probe: {method: GET, status: 405, note: 'POST-only; tools/list was not issued because UCP calls require a platform profile in _meta.ucp.profile. Tool names are from https://postalform.com/developers, not from a live listing.'}
+- endpoint: https://postalform.com/acp/mcp
+  protocol: ACP (Agentic Commerce Protocol) 2025-09-29, transport mcp, services [checkout]
+  declared_in: well-known/postalform-com-acp.json
+  probe: {method: GET, status: 'timed out after 25s with a 13-byte text/event-stream body', note: 'Behaves like an SSE stream on GET; not enumerated.'}

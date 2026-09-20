@@ -1,0 +1,131 @@
+generated: '2026-09-19'
+method: derived
+source: openapi/postalform-com-machine-payments-openapi.json
+also_derived_from: openapi/postalform-com-projects-openapi.json
+probed: true
+docs:
+- https://postalform.com/agents
+- https://postalform.com/mpp.md
+- https://postalform.com/developers
+format: json-error-object
+envelope:
+  media_type: application/json
+  schema: MachineErrorResponse
+  fields:
+  - name: message
+    required: true
+    description: Human-readable summary ("Validation failure", "Order not found.").
+  - name: code
+    required: true
+    description: Stable machine code — invalid_request, missing_buyer_email, request_id_mismatch, payment_required, rate_limited, payment_error (from the docs; the spec types it as a free string).
+  - name: order_id
+    required: false
+    description: UUID of the order the error concerns (409 and payment errors).
+  - name: errors
+    required: false
+    description: Array of field problems {path, code, message, hint?, fix_examples?[]} — the fix_examples entries are strings or objects showing a corrected value.
+  - name: help
+    required: false
+    observed_only: true
+    description: >-
+      Present on every live error response but NOT declared in the spec: {docs, developer_docs, openapi,
+      mcp_server, infra_console, support_email} — a machine-readable pointer block that tells an agent where
+      the contract, the MCP server and support live. Worth adding to MachineErrorResponse.
+  observed:
+  - status: 422
+    url: 'POST https://postalform.com/api/machine/orders/validate (body {})'
+    body: '{"message":"Validation failure","code":"invalid_request","errors":[{"path":"request_id","code":"invalid_type","message":"Invalid input: expected string, received undefined"},{"path":"buyer_name","code":"invalid_type","message":"Invalid input: expected string, received undefined"},{"path":"buyer_email","code":"invalid_type","message":"Invalid input: expected string, received undefined"},{"path":"sender_name","code":"invalid_type","message":"Invalid input: expected string, received undefined"},{"path":"recipient_name","code":"invalid_type","message":"Invalid input: expected string, received undefined"}],"help":{"docs":"https://postalform.com/agents","developer_docs":"https://postalform.com/developers","openapi":"https://postalform.com/openapi.json","mcp_server":"https://postalform.com/mcp","infra_console":"https://projects.postalform.com","support_email":"support@postalform.com"}}'
+    headers_of_note: {x-request-id: ac17f51b-efb6-4afb-84d5-d829d3b6f239, strict-transport-security: max-age=15552000}
+    note: Validation-only endpoint; nothing was created. errors[].code values (invalid_type) are zod-style codes.
+  - status: 404
+    url: 'GET https://postalform.com/api/machine/orders/00000000-0000-0000-0000-000000000000'
+    body: '{"message":"Order not found.","help":{...}}'
+  - status: 404
+    url: 'GET https://postalform.com/api/machine/forms/8822/schema'
+    body: '{"error":"Form not found.","help":{...}}'
+    note: >-
+      INCONSISTENCY — the forms schema 404 uses an "error" key while the orders 404 uses "message", and
+      neither carries the "code" the MachineErrorResponse schema marks required. (8822 is listed as a web
+      form at /forms/8822 but is not in the machine forms catalog; the catalog's slugs include 1099-nec and
+      bank-fraud-unauthorized-transfer-dispute.)
+  - status: 503
+    url: 'GET https://postalform.com/api/health'
+    body: '{"status":"degraded","timestamp":"2026-09-19T23:37:47.366Z","checks":{"db":{"ok":true},"redis":{"ok":true},"queue":{"ok":false,"failed":53,"error":"failed jobs present"},"worker":{"ok":true},"ghostscript":{"ok":true}}}'
+    note: The health endpoint the provider lists as StatusPage in its apis.json; a component-level JSON, not an error envelope.
+  json_rpc:
+    note: /mcp and /a2a use JSON-RPC 2.0 error objects; observed -32601 Method not found on /a2a for tasks/get and agent/getAuthenticatedExtendedCard.
+problem_types:
+- status: 400
+  code: invalid_request
+  title: Payload validation failed (documented alias of 422)
+  occurrences: 1
+  source_operations: [listMachineForms]
+  remediation: Fix the query parameters (limit is an integer 1-200; cursor is opaque).
+- status: 402
+  code: payment_required
+  title: Payment required — the normal first answer to a create call
+  occurrences: 6
+  media_types: {x402: application/json (X402PaymentRequiredResponse), mpp: application/problem+json (MppPaymentRequiredResponse)}
+  source_operations: [createMachineOrder, createMachineFlowerLetter, createMppMachineOrder, createMppMachineFlowerLetter, createMppShippingLabel]
+  headers: {x402: PAYMENT-REQUIRED, mpp: 'WWW-Authenticate: Payment ... (one per configured method: tempo, stripe, card)'}
+  body_fields: [order_id, request_id, 'status|code payment_required', message, 'preview_url?', 'campaign_url?', 'postcard_guidelines_url?', 'MPP only: next_step, supported_methods, documentation_url, price_breakdown']
+  remediation: >-
+    Show preview_url to the owner, obtain approval, pay exactly one challenge, then retry the byte-identical
+    body with the same request_id plus PAYMENT-SIGNATURE (x402) or the Authorization Payment header (MPP).
+    Never create a second order.
+- status: 404
+  title: Order, form or receipt not found
+  occurrences: 7
+  source_operations: [getMachineFormSchema, getMachineOrder, getMachineFlowerLetter, getMppMachineOrder, getMppMachineFlowerLetter, getMppShippingLabel]
+  remediation: Status endpoints accept the canonical order_id or any aliased request_id; check which one you stored.
+- status: 409
+  code: request_id_mismatch
+  title: request_id reused with a different payload
+  occurrences: 11
+  source_operations: [validateMachineOrder, createMachineOrder, validateMachineFlowerLetter, createMachineFlowerLetter, validateMppMachineOrder, createMppMachineOrder, validateMppMachineFlowerLetter, createMppMachineFlowerLetter, validateMppShippingLabel, createMppShippingLabel]
+  remediation: PostalForm treats request_id as a strict idempotency key and rejects payload drift. Resend the original body, or generate a fresh UUID for a genuinely different mailing.
+- status: 422
+  code: invalid_request
+  title: Payload validation failed
+  occurrences: 11
+  source_operations: [validateMachineOrder, createMachineOrder, validateMachineFlowerLetter, createMachineFlowerLetter, validateMppMachineOrder, createMppMachineOrder, validateMppMachineFlowerLetter, createMppMachineFlowerLetter, validateMppShippingLabel, createMppShippingLabel]
+  documented_causes:
+  - Manual addresses — US needs a two-letter state and ZIP/ZIP+4; Canada a province and postal code; other countries line1, city and postal code.
+  - Country must be one of US, CA, AT, BE, CH, DE, ES, FR, GB, IN, LU, NL (manual countryCode or Loqate id prefix).
+  - Loqate *_address_type must be "Address", not "Container".
+  - Exactly one document source (pdf, letter or form); postcard needs a valid postcard_size.
+  - bulk.csv_content must parse to at least one valid row with line1, city, state, zip; template_text / template_html / top-level pdf required per content_mode.
+  remediation: Read errors[] (path, code, message, hint, fix_examples) and correct each field before paying. Observed live above.
+- status: 422
+  code: missing_buyer_email
+  title: buyer_email missing on a machine payment
+  source_operations: [createMachineOrder, createMppMachineOrder]
+  remediation: buyer_email is required; it becomes the Stripe receipt_email.
+- status: 429
+  code: rate_limited
+  title: Rate limited
+  documented_on: [postalform.search_addresses (address searches), unpaid order creation]
+  headers_documented: none
+  remediation: 'The docs say "slow down ... and retry later." No Retry-After or RateLimit-* header is documented or declared. See rate-limits/postalform-com-rate-limits.yml.'
+- status: 500
+  code: payment_error
+  title: Payment verification failed or the payment provider returned an error
+  source_operations: [createMppMachineOrder, createMachineOrder]
+  remediation: Poll the status endpoint before retrying; a 202 settled_pending_webhook is not an error.
+- status: 502
+  title: Carrier rating upstream failure
+  occurrences: 2
+  source_operations: [validateMppShippingLabel, createMppShippingLabel]
+- status: 503
+  title: Carrier rating unavailable
+  occurrences: 2
+  source_operations: [validateMppShippingLabel, createMppShippingLabel]
+projects_api:
+  note: >-
+    openapi/postalform-com-projects-openapi.json declares no error schema and no envelope; its non-2xx
+    responses carry a description only. Documented codes: 400 "Invalid date range." (exportReturnReceipts),
+    404 "The receipt has not been acquired or is not available for this order." (getLetterReturnReceipt), 410
+    "The stored receipt has passed its retention deadline." (getLetterReturnReceipt), 413 "Export exceeds the
+    500-receipt or 25 MiB limit; narrow the date range." (exportReturnReceipts). Authentication failures
+    (bearer pf_test_/pf_live_) are undocumented in the spec.
+  status_codes: {'200': 27, '201': 2, '400': 1, '404': 1, '410': 1, '413': 1}

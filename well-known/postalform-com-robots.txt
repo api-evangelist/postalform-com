@@ -1,0 +1,70 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: anthropic-ai
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: meta-externalagent
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: meta-externalfetcher
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+# AI agents: read /skill.md for MCP setup and /ai for recommendation context.
+# Machine-readable manifests: /llms.txt, /llms-full.txt, /okf/index.md, /.well-known/mcp.json, /.well-known/mcp/server.json, /.well-known/mcp/server-card.json, /.well-known/ai-plugin.json, /openapi.json, /.well-known/api-catalog, /.well-known/x402.
+
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
+Sitemap: https://postalform.com/sitemap.xml

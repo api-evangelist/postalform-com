@@ -1,0 +1,82 @@
+generated: '2026-09-19'
+method: searched
+source: https://postalform.com/developer-mail-api.md
+docs:
+- https://postalform.com/developers/quickstart
+- https://postalform.com/agents
+- https://projects.postalform.com/docs
+- https://projects.postalform.com/llm-context.txt
+probed:
+- {url: 'https://postalform.com/api/machine/orders/validate', method: POST, status: 422, fetched: '2026-09-19', note: 'empty body; confirms the validate route exists and is free of payment side effects — a valid body returns a quote without creating a paid order'}
+- {url: 'https://postalform.com/api/machine/forms?limit=3', method: GET, status: 200, fetched: '2026-09-19', note: 'free, unauthenticated catalog read (3 of the published workflow forms)'}
+- {url: 'https://postalform.com/v1/test/orders/test_mail_example', method: GET, status: 404, fetched: '2026-09-19', note: 'the test-mode route the /developers/quickstart page documents; www 301s to the apex, which returns the SPA 404 page'}
+- {url: 'https://postalform.com/v1/test/mail_drafts', method: POST, status: 404, fetched: '2026-09-19', note: 'same — documented on the quickstart page, not served'}
+summary: >-
+  PostalForm has three rehearsal surfaces of different strength. (1) PostalForm Projects has a REAL separate
+  test environment: every workspace gets a pf_test_ key and a pf_live_ key, and test keys "simulate uploads,
+  quotes, orders, timelines, and webhooks for free" and "never send physical mail" — the OpenAPI models this
+  as a Mode enum (test | live) on API keys, orders and credit balances, with a mock_test_credits billing rail.
+  (2) The Machine Payments API has no separate environment but a free validate/quote twin for every paid
+  create (validateMachineOrder, validateMppMachineOrder, validateMachineFlowerLetter, ...) and the docs name
+  testnets for the payment leg (Base Sepolia eip155:84532 for x402; Tempo testnet for MPP; Stripe's
+  granted-token test helper to mint an spt_ token; the Visa SDK mock flow for card-MPP). (3) The MCP server
+  ships a read-only preview tool (postalform.preview_letter_order_draft) and hosted-checkout drafts that
+  commit nothing until paid. A fourth surface, /v1/test/mail_drafts, is documented on the quickstart page
+  with a watermarked "TEST MODE" preview and fake tracking events, but the route 404s live. No test card
+  numbers or test addresses are published by PostalForm (card entry is Stripe-hosted).
+test_vs_live:
+  projects_api:
+    separate_environment: true
+    key_prefixes: {test: pf_test_, live: pf_live_}
+    mode_field: 'Mode enum [test, live] on ApiKey, Letter, CreditBalance; rotateApiKey takes {mode}'
+    billing_rail_test: mock_test_credits
+    billing_rail_live: prepaid_credits
+    guarantees:
+    - 'Test keys simulate the complete workflow for free and never send physical mail.'
+    - 'Each workspace has separate test and live keys, credits, orders, and webhook settings.'
+    - 'Signed webhooks fire in test mode too (simulated timelines).'
+    env_vars_from_stripe_projects_provisioning: [POSTALFORM_TEST_API_KEY, POSTALFORM_LIVE_API_KEY, POSTALFORM_WORKSPACE_ID, POSTALFORM_API_BASE, POSTALFORM_DASHBOARD_URL, POSTALFORM_WEBHOOK_ENDPOINT_ID, POSTALFORM_WEBHOOK_SECRET]
+    signup: https://projects.postalform.com/signup (or provision postalform/mail through Stripe Projects)
+    source: https://postalform.com/developer-mail-api.md
+  machine_payments_api:
+    separate_environment: false
+    key_prefixes: none (no API key on this surface)
+    note: One host, no credentials. The dry run is the validate endpoint; the payment leg can be exercised on testnets.
+  mcp_server:
+    separate_environment: false
+    note: postalform.preview_letter_order_draft is readOnlyHint true; draft tools create unpaid drafts that mail nothing until checkout completes.
+dry_run:
+  status: verified
+  operations:
+  - {operationId: validateMachineOrder, path: 'POST /api/machine/orders/validate', cost: free, side_effects: none, returns: 'MachineOrderValidationResponse — request_id, request_hash, order_id, status, quote (+ bulk.recipient_count)'}
+  - {operationId: validateMppMachineOrder, path: 'POST /api/machine/mpp/orders/validate', cost: free, side_effects: none, returns: 'quote plus protocol mpp and methods[]'}
+  - {operationId: validateMachineFlowerLetter, path: 'POST /api/machine/flower-letters/validate', cost: free, returns: 'Florist One product, ZIP, delivery date and total'}
+  - {operationId: validateMppMachineFlowerLetter, path: 'POST /api/machine/mpp/flower-letters/validate', cost: free}
+  - {operationId: validateMppShippingLabel, path: 'POST /api/machine/mpp/shipping-labels/validate', cost: free, returns: 'live carrier rates'}
+  - {tool: postalform.preview_letter_order_draft, surface: MCP, cost: free, side_effects: none}
+  - {operationId: createLetterQuote / createPostcardQuote, surface: Projects, cost: free, returns: 'final price_cents before an order is created'}
+  guarantee: 'The provider''s own guidance: "call the validate endpoint first to verify the payload and get a quote before attempting payment" (openapi info.description).'
+payment_leg_test_values:
+  x402:
+    test_network: 'Base Sepolia (eip155:84532)'
+    live_network: 'Base (eip155:8453)'
+    source: https://postalform.com/agents — "Test environments may use testnets (for example Base Sepolia)"; purl --network must match the PAYMENT-REQUIRED network
+  mpp:
+    tempo: 'Tempo testnet in local/integration environments; Tempo mainnet once enabled for your account'
+    stripe_spt: 'Stripe granted-token test helper mints an spt_... token matching the challenge (agents.md "Test mode: mint a Stripe SPT that matches the challenge")'
+    card_mpp: 'Visa SDK mock flow in local/test; production card challenge appears when Visa Acceptance credentials are configured'
+    source: https://postalform.com/agents
+  hosted_checkout: 'No PostalForm test values; checkout is Stripe-hosted. PostalForm does not accept raw card details.'
+documented_but_not_served:
+  quickstart_test_mode:
+    base: https://www.postalform.com/v1/test
+    routes: ['POST /mail_drafts', 'POST /form_drafts', 'GET /orders/{id}']
+    documented_guarantees: ['watermarked TEST MODE preview PDF', 'fake zero-dollar quote', 'fake tracking events', 'never submits to a print provider', 'never charges real money']
+    documented_headers: 'Idempotency-Key: <uuid> required on create requests'
+    documented_webhook_events: [mail.order.created, mail.order.paid, mail.order.submitted, mail.order.provider_accepted, mail.order.provider_rejected, mail.order.mailed, mail.order.tracking_updated, mail.order.delivery_attempted, mail.order.delivered, mail.order.failed, mail.order.refunded]
+    live_result: 'GET and POST both return the site''s 404 HTML page (2026-09-19). Either not yet deployed or removed; the page is dated but not versioned. Recorded so a reader does not build against it from the docs alone.'
+    source: https://postalform.com/developers/quickstart
+fixtures:
+  published_form_catalog: 'GET https://postalform.com/api/machine/forms — free, live; slugs observed include 1099-nec, bank-fraud-unauthorized-transfer-dispute, bankruptcy-correspondence-packets (each with create_paths for x402 and mpp)'
+  postcard_templates: ['https://postalform.com/postcard-guidelines/us_intl_postcard_6inx4in.pdf', 'https://postalform.com/postcard-guidelines/us_intl_postcard_9inx6in.pdf', 'https://postalform.com/postcard-guidelines/us_intl_postcard_11inx6in.pdf']
+  example_addresses_in_docs: 'The docs use "123 Sender St / 456 Recipient Ave, Springfield, IL 62701" and Loqate ids of the form US|LP|...|13_ENG as illustrations, not as guaranteed-valid test addresses.'

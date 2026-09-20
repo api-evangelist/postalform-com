@@ -1,0 +1,182 @@
+generated: '2026-09-19'
+method: searched
+source: https://postalform.com/.well-known/api-catalog
+derived_from:
+- openapi/postalform-com-machine-payments-openapi.json
+- openapi/postalform-com-projects-openapi.json
+- a2a/postalform-com-agent-card.json
+- mcp/postalform-com-mcp-tools.json
+docs:
+- https://postalform.com/developers
+- https://postalform.com/agents
+- https://postalform.com/security
+summary: >-
+  PostalForm's conformance profile is the agent-commerce protocol stack, declared by the contracts and
+  discovery documents themselves rather than by prose: an A2A 1.0 agent card, an MCP server at wire protocol
+  2025-06-18 with registry (server.json) and server-card manifests, JSON-RPC 2.0 on both, x402 v2 discovery
+  (USDC on Base, eip155:8453, Coinbase CDP facilitator), Stripe's Machine Payments Protocol (MPP) with
+  WWW-Authenticate: Payment challenges, the OpenAI Agentic Commerce Protocol (ACP 2025-09-29) and the
+  Universal Commerce Protocol (UCP 2026-01-11) checkout capability, an RFC 9727 API catalog served with the
+  correct linkset media type, an APIs.json 0.20 index, an OpenAI ai-plugin manifest and a robots.txt
+  Content-Signal. It declares NO OAuth 2.0 / OIDC (the machine surface is payment-gated, the Projects surface
+  is bearer-key), no RFC 9116 security.txt, no RFC 8594 Sunset/Deprecation, and RFC 9457 problem details only
+  on the MPP 402 responses (media type, not field shape). No SOC 2 / ISO 27001 / PCI / HIPAA certification is
+  published: the security page describes practices and says card data never touches PostalForm servers
+  (Stripe), but names no audit or attestation, so no Compliance pointer is emitted.
+standards:
+- id: a2a
+  name: Agent2Agent protocol
+  version: '1.0'
+  conforms: true
+  evidence: >-
+    a2a/postalform-com-agent-card.json — protocolVersion "1.0", supportedInterfaces[0].protocolBinding JSONRPC,
+    capabilities object, skills[] of 3; server responds with header a2a-version: 1.0. Graded conformant in
+    a2a/postalform-com-a2a.yml. Deviation: the /a2a JSON-RPC endpoint answers tasks/get with -32601 Method not
+    found (a discovery bridge, not a task server).
+- id: mcp
+  name: Model Context Protocol
+  version: '2025-06-18'
+  conforms: true
+  evidence: >-
+    POST https://postalform.com/mcp initialize returned protocolVersion "2025-06-18", serverInfo {postalform,
+    0.1.0}, capabilities tools+resources; tools/list returned 12 tools with inputSchema, outputSchema and
+    annotations (mcp/postalform-com-mcp-tools.json). The /.well-known/mcp.json manifest and server card declare
+    2025-11-25.
+- id: mcp-registry-server-json
+  name: MCP Registry server.json schema
+  version: '2025-12-11'
+  conforms: true
+  evidence: well-known/postalform-com-mcp-server.json — $schema https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json, name com.postalform/postalform, remotes[] streamable-http.
+- id: mcp-server-card
+  name: MCP Server Card
+  version: v1
+  conforms: true
+  evidence: well-known/postalform-com-mcp-server-card.json — $schema https://static.modelcontextprotocol.io/schemas/mcp-server-card/v1.json.
+- id: json-rpc-2.0
+  conforms: true
+  evidence: 'Both /mcp (SSE-framed) and /a2a answer {"jsonrpc":"2.0", ...}; /a2a returns standard -32601 Method not found for unimplemented methods.'
+- id: x402
+  name: x402 HTTP payment protocol
+  version: 'discovery manifest version 2'
+  conforms: true
+  verification: partial
+  domain_standard_signature: true
+  evidence: >-
+    well-known/postalform-com-x402.json — protocol x402, scheme exact, token USDC, network eip155:8453,
+    facilitator https://api.cdp.coinbase.com/platform/v2/x402, two payable resources with validate and status
+    URLs; openapi/postalform-com-machine-payments-openapi.json declares 402 X402PaymentRequiredResponse on
+    createMachineOrder and createMachineFlowerLetter and x-payment-info {protocols: [x402], pricingMode range,
+    minPrice 3.40, maxPrice 200.00}; the A2A card declares the manifest as a capabilities extension.
+  note: >-
+    The manifest, the contract declarations and the documented PAYMENT-REQUIRED / PAYMENT-SIGNATURE /
+    PAYMENT-RESPONSE header flow were captured. The live 402 payload was NOT observed, because reaching it
+    means posting a complete, valid order to a create endpoint, which this pipeline does not do.
+- id: mpp
+  name: Machine Payments Protocol (Stripe)
+  conforms: true
+  verification: partial
+  domain_standard_signature: true
+  evidence: >-
+    openapi/postalform-com-machine-payments-openapi.json — six /api/machine/mpp/* create/validate operations,
+    402 application/problem+json MppPaymentRequiredResponse with supported_methods enum [tempo, stripe_spt,
+    card], x-payment-info {protocols: [mpp]}; https://postalform.com/agents documents WWW-Authenticate: Payment
+    challenges, Authorization: Payment retry and the Payment-Receipt success header; Stripe's MPP launch post
+    (https://stripe.com/blog/machine-payments-protocol) is cited on the provider's About page.
+  note: Live 402 not observed for the same reason as x402.
+- id: acp
+  name: Agentic Commerce Protocol (OpenAI / Stripe)
+  version: '2025-09-29'
+  conforms: true
+  verification: declared
+  domain_standard_signature: true
+  evidence: well-known/postalform-com-acp.json — protocol.name acp, version 2025-09-29, api_base_url https://postalform.com/acp, transports [mcp], services [checkout]; MCP draft tools return an ACP checkout_session and complete_checkout accepts a Stripe shared payment token (spt_...).
+  note: The /acp/mcp endpoint was not enumerated (GET hangs as an SSE stream; POST would require a session).
+- id: ucp
+  name: Universal Commerce Protocol
+  version: '2026-01-11'
+  conforms: true
+  verification: declared
+  domain_standard_signature: true
+  evidence: well-known/postalform-com-ucp.json — ucp.version 2026-01-11, services dev.ucp.shopping.checkout with mcp.endpoint https://postalform.com/ucp/mcp, capability dev.ucp.shopping.checkout, payment handler com.postalform.stripe; https://postalform.com/developers lists the five UCP tools.
+  note: /ucp/mcp answered 405 on GET; tools were not enumerated because UCP calls require a platform profile in _meta.ucp.profile.
+- id: rfc9727
+  name: RFC 9727 API Catalog
+  conforms: true
+  domain_standard_signature: true
+  evidence: >-
+    GET https://postalform.com/.well-known/api-catalog returned 200 with Content-Type application/linkset+json;
+    profile="https://www.rfc-editor.org/info/rfc9727" and a linkset of nine anchors carrying service-desc,
+    service-doc and status relations (well-known/postalform-com-api-catalog.json). One of the few catalog
+    providers serving the RFC's media type and profile correctly.
+- id: apis-json
+  name: APIs.json
+  version: '0.20'
+  conforms: true
+  evidence: https://postalform.com/apis.json and /.well-known/apis.json — specificationVersion 0.20, type Index, two apis[] with properties[], common[] including APICatalog and StatusPage (well-known/postalform-com-apis.json).
+- id: openai-ai-plugin
+  name: OpenAI ai-plugin manifest
+  version: v1
+  conforms: true
+  evidence: well-known/postalform-com-ai-plugin.json — schema_version v1, auth.type none, api.type openapi.
+- id: content-signal
+  name: Content-Signal (robots.txt)
+  conforms: true
+  evidence: 'well-known/postalform-com-robots.txt — "Content-Signal: ai-train=yes, search=yes, ai-input=yes" plus explicit per-agent Allow rules for twelve AI crawlers.'
+- id: llms-txt
+  conforms: true
+  evidence: https://postalform.com/llms.txt (14,676 bytes, saved verbatim under llms/) and /llms-full.txt (2.8 MB, not saved).
+- id: openapi-3.1
+  conforms: true
+  version: 3.1.0
+  evidence: >-
+    Both contracts declare openapi "3.1.0"; the machine API applies JSON Schema 2020-12 features (oneOf/anyOf
+    with null, additionalProperties false); the Projects API uses nullable-style unions (type ["string","null"]).
+- id: caip-2
+  name: CAIP-2 chain identifier
+  conforms: true
+  evidence: eip155:8453 (Base mainnet) in the x402 manifest; eip155:84532 (Base Sepolia) named on https://postalform.com/agents for test environments.
+- id: idempotency-key-header
+  name: Idempotency-Key request header (IETF draft-ietf-httpapi-idempotency-key-header)
+  conforms: true
+  verification: partial
+  evidence: openapi/postalform-com-projects-openapi.json — header parameter Idempotency-Key, required true, on createLetter and createPostcard; 200 "Idempotent replay" vs 201 "Created order". The machine API implements the same semantic as a body field (request_id UUID) rather than the header.
+- id: rfc9457-problem-details
+  conforms: false
+  verification: partial
+  evidence: >-
+    Only the three MPP 402 responses (createMppMachineOrder, createMppMachineFlowerLetter, createMppShippingLabel)
+    declare application/problem+json, and their MppPaymentRequiredResponse schema carries code / message /
+    next_step / documentation_url rather than type / title / status / detail / instance. Every other error is
+    application/json MachineErrorResponse {message, code, errors[]}. Recorded as not conforming; the media
+    type alone is not RFC 9457.
+- id: oauth2
+  conforms: false
+  evidence: No oauth2 securityScheme in either contract; /.well-known/oauth-authorization-server and /.well-known/oauth-protected-resource 404 on postalform.com and projects.postalform.com. The machine surface is payment-gated; Projects uses bearer API keys (pf_test_ / pf_live_).
+- id: oidc
+  conforms: false
+  evidence: /.well-known/openid-configuration 404 on all four hosts probed.
+- id: rfc9116-security-txt
+  conforms: false
+  evidence: /.well-known/security.txt 404 on postalform.com, www, projects and blog hosts.
+- id: rfc8594-sunset
+  conforms: false
+  evidence: No Sunset or Deprecation header declared in either contract; no deprecated operations; no deprecation policy page (/changelog and /status 404).
+- id: asyncapi
+  conforms: false
+  evidence: No AsyncAPI document found (/.well-known/asyncapi.yaml, /asyncapi.yaml 404; none in the GitHub org). Webhooks are documented in the Projects OpenAPI instead — see asyncapi/postalform-com-projects-webhooks.yml.
+- id: soc2-iso27001-pci-hipaa
+  name: Published security certifications
+  conforms: false
+  evidence: >-
+    https://postalform.com/security (fetched 2026-09-19) describes document handling, retention, access
+    limits and Stripe payment processing ("Card details never touch PostalForm servers") and offers a
+    security summary by email for compliance teams; it names no SOC 2, ISO 27001, PCI DSS, HIPAA or FedRAMP
+    attestation. probe-security-programs.py found no trust center. No Compliance pointer is emitted.
+regulatory_regime_shortlist_checked:
+  note: >-
+    PostalForm handles consumer dispute, tax (1099-NEC), mortgage, bank-fraud and medical-records packets
+    and takes card and crypto payments as a merchant. The sector standards worth probing were payments
+    (PCI DSS — not published; Stripe-hosted card entry), postal/USPS (Certified Mail PS Forms 3800/3811 —
+    documented as product features, not a machine standard) and privacy (see
+    regulatory/postalform-com-regulatory-posture.yml). None produced a contract-level signature beyond the
+    agent-commerce stack recorded above.

@@ -1,0 +1,51 @@
+generated: '2026-09-19'
+method: searched
+source: https://github.com/postalform
+package_count: 1
+sdk_count: 0
+packages:
+- language: javascript
+  registry: npm
+  name: '@postalform/agent-mail-mcp'
+  kind: mcp-server (local stdio wrapper)
+  url: https://github.com/postalform/agent-mail-mcp
+  registry_url: https://www.npmjs.com/package/@postalform/agent-mail-mcp
+  install: npx -y @postalform/agent-mail-mcp
+  official: true
+  version: null
+  published: null
+  version_in_source: 0.1.0
+  license: MIT
+  bin: agent-mail-mcp
+  engines: node >=20
+  repo_created: '2026-06-20'
+  repo_last_push: '2026-06-20'
+  note: >-
+    UNPUBLISHED — https://registry.npmjs.org/@postalform%2Fagent-mail-mcp returned 404 on 2026-09-19, so
+    version and published are null: the package exists only as source in the provider's GitHub org
+    (package.json version 0.1.0, publishConfig.access public, README "configure an MCP client to run it from
+    npm after publication"). It is not an SDK: it is a thin local stdio MCP server exposing four tools
+    (agent_mail_discovery, list_postalform_tools, validate_letter_mail, create_letter_checkout_draft) that
+    call the hosted MCP endpoint and the REST validate route. Runnable from source with npm install && npm
+    run server. Repository unchanged since its creation day.
+related_repositories:
+- name: postalform/gym-cancellation-saas-template
+  url: https://github.com/postalform/gym-cancellation-saas-template
+  kind: template (Stripe Projects template for a Cloudflare Workers SaaS that mails gym cancellation letters with PostalForm)
+  language: JavaScript
+  last_push: '2026-06-29'
+  official: true
+  note: An example application, not a client library.
+searched:
+- {registry: npm, query: 'https://registry.npmjs.org/-/v1/search?text=postalform&size=10', result: '1 unrelated package (markdown-seo); no first-party package'}
+- {registry: npm, query: 'https://registry.npmjs.org/@postalform%2Fagent-mail-mcp', status: 404}
+- {registry: npm, query: 'https://registry.npmjs.org/postalform', status: 404}
+- {registry: pypi, query: 'https://pypi.org/pypi/postalform/json', status: 404}
+- {registry: pypi, query: 'https://pypi.org/pypi/postalform-mcp/json', status: 404}
+- {registry: github, query: 'https://api.github.com/orgs/postalform/repos', result: '2 public repositories (agent-mail-mcp, gym-cancellation-saas-template); org created 2026-06-20, blog https://postalform.com'}
+- {registry: github-search, query: 'https://api.github.com/search/repositories?q=postalform', result: 'Must-be-Ash/mail-skill — a THIRD-PARTY agent skill that pays PostalForm via x402 USDC from an awal wallet (not first-party, not listed)'}
+- {registry: docs, query: 'https://postalform.com/developers, /developer-mail-api', result: 'No SDK named; the documented ways in are raw HTTP (OpenAPI 3.1 "for client generation"), the remote MCP server, and the Stripe Link CLI / purl / mppx third-party payment clients'}
+note: >-
+  PostalForm ships no client SDK in any registry searched and its docs point developers at OpenAPI-based
+  client generation instead. No SDKs pointer is emitted; a Packages pointer is emitted for the catalogued
+  (unpublished) MCP wrapper.

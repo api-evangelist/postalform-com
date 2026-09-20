@@ -1,0 +1,62 @@
+generated: '2026-09-19'
+method: searched
+source: openapi/postalform-com-projects-openapi.json
+spec_type: Webhooks
+asyncapi_published: false
+docs:
+- https://postalform.com/developer-mail-api
+- https://projects.postalform.com/llm-context.txt
+- https://postalform.com/developers/quickstart
+summary: >-
+  PostalForm publishes no AsyncAPI document (/.well-known/asyncapi.yaml and /asyncapi.yaml 404; none in the
+  GitHub org), so none is recorded and nothing is fabricated. It DOES document a real webhook surface on the
+  PostalForm Projects API: customer-configured HTTPS endpoints (createWebhookEndpoint) receive signed
+  fulfillment events for letters and postcards, with a per-endpoint signing secret returned once and
+  rotatable, automatic retries with next_retry_at, an event log (listWebhookEvents) and manual replay
+  (replayWebhookEvent). The event names, payload schema and delivery-attempt record are all declared in the
+  Projects OpenAPI components (CustomerWebhookEventType, CustomerWebhookPayload, WebhookEvent,
+  WebhookDeliveryAttempt). The Machine Payments API and the MCP server have no outbound webhooks — agents poll
+  the status endpoints; "settled_pending_webhook" there refers to PostalForm's own inbound Stripe webhook.
+surface:
+  api: PostalForm Projects Public API
+  base_url: https://projects.postalform.com/api/v1
+  auth_for_management: bearer pf_test_ / pf_live_ API key
+  endpoint_requirements: 'url must match ^https://'
+  signature_header: PostalForm-Signature
+  signing_secret: 'signing_secret returned only on createWebhookEndpoint and rotateWebhookEndpointSecret (WebhookEndpointSecretResponse); endpoint-scoped'
+  retries: 'Failed deliveries are retried; each attempt is recorded as WebhookDeliveryAttempt {attemptNumber, status succeeded|failed, httpStatus, responseBodySnippet, attemptedAt, nextRetryAt}'
+  replay: 'POST /webhook-events/{event_id}/replay (replayWebhookEvent) queues a delivery again'
+  test_mode: 'Webhooks fire in test mode with simulated timelines (developer-mail-api: pf_test_ keys "simulate uploads, quotes, orders, timelines, and webhooks")'
+management_operations: [listWebhookEndpoints, createWebhookEndpoint, disableWebhookEndpoint, rotateWebhookEndpointSecret, listWebhookEvents, replayWebhookEvent]
+events:
+- {name: postalform.letter.accepted, description: 'Letter accepted for production or mailing after the order leaves PostalForm''s preparation queue.'}
+- {name: postalform.letter.in_transit, description: 'Letter entered the mail stream. The payload may include or update mailpiece.tracking_number when tracking is available.'}
+- {name: postalform.letter.delivered, description: 'Letter reported delivered by the carrier or delivery network.'}
+- {name: postalform.letter.returned, description: 'Letter returned or otherwise marked undeliverable.'}
+- {name: postalform.letter.failed, description: 'Letter could not be produced or mailed. Inspect the order timeline and retry with a corrected request when appropriate.'}
+- {name: postalform.letter.canceled, description: 'Letter canceled before delivery completion.'}
+- {name: postalform.postcard.accepted, description: 'Postcard twin of letter.accepted.'}
+- {name: postalform.postcard.in_transit, description: 'Postcard twin.'}
+- {name: postalform.postcard.delivered, description: 'Postcard twin.'}
+- {name: postalform.postcard.returned, description: 'Postcard twin.'}
+- {name: postalform.postcard.failed, description: 'Postcard twin.'}
+- {name: postalform.postcard.canceled, description: 'Postcard twin.'}
+payload:
+  schema: CustomerWebhookPayload
+  shape:
+    id: 'string (example evt_123)'
+    type: CustomerWebhookEventType
+    data: {object: Letter}
+    mailpiece: {status: 'string|null', tracking_number: 'string|null', tracking_status: 'string|null'}
+  note: data.object is the full Letter (or postcard) resource including status, mode, price_cents, tracking fields, err_* return-receipt fields and caller metadata.
+event_log_record:
+  schema: WebhookEvent
+  fields: [id, workspaceId, orderId, eventType, payload, createdAt, 'deliveries[]']
+inconsistency_recorded:
+  note: >-
+    https://postalform.com/developers/quickstart lists a DIFFERENT event vocabulary — mail.order.created,
+    mail.order.paid, mail.order.submitted, mail.order.provider_accepted, mail.order.provider_rejected,
+    mail.order.mailed, mail.order.tracking_updated, mail.order.delivery_attempted, mail.order.delivered,
+    mail.order.failed, mail.order.refunded — for a /v1/test API whose routes 404 live. The Projects OpenAPI
+    (the served contract) is authoritative for the twelve postalform.letter.* / postalform.postcard.* names
+    above; the quickstart names are recorded here only so a reader is not surprised by them.

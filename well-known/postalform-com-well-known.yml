@@ -1,0 +1,165 @@
+generated: '2026-09-19'
+method: probed
+source: >-
+  Live GET probes of the named /.well-known/* path list on postalform.com (website, OpenAPI servers[] host,
+  MCP server host and A2A host — one origin), www.postalform.com, projects.postalform.com (the second OpenAPI
+  servers[] host) and blog.postalform.com, 2026-09-19. Every row below is a request that was actually issued;
+  every status is the one returned. Only 200s carrying a real, correctly-typed document were saved.
+summary:
+  hosts_probed: 4
+  paths_probed: 46
+  documents_served: 14
+  hit_count: 14
+  path_echo_control: passed
+  note: >-
+    postalform.com is one of the densest /.well-known/ surfaces in the catalog: an A2A agent card (canonical
+    and legacy paths), an RFC 9727 api-catalog linkset served with the correct application/linkset+json media
+    type and rfc9727 profile, an APIs.json index at both /apis.json and /.well-known/apis.json, an x402 v2
+    payment-discovery manifest (plus a .json alias), a UCP shopping profile, an ACP manifest, three MCP
+    discovery documents (mcp.json, mcp/server.json, mcp/server-card.json), a capability card and an
+    ai-plugin.json. What it does NOT serve: security.txt (RFC 9116), openid-configuration,
+    oauth-authorization-server, oauth-protected-resource (RFC 9728 — relevant because this apex IS the MCP
+    resource host), aauth-resource.json and asyncapi.yaml. Unserved paths return a 404 text/html page (the
+    site's real 404, ~7.7 KB), and a negative-control path that cannot exist also 404s, so the 200s are
+    served documents and not a catch-all. robots.txt carries a Content-Signal line (ai-train=yes, search=yes,
+    ai-input=yes) and per-crawler allow rules for twelve named AI agents; it is saved as the consent signal.
+hosts:
+- host: postalform.com
+  role: Website, API (OpenAPI servers[]), MCP server host and A2A JSON-RPC host — one origin behind Cloudflare
+  documents:
+  - path: /.well-known/agent-card.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 3417
+    file: ../a2a/postalform-com-agent-card.json
+    standard: A2A Agent Card (protocolVersion 1.0)
+    note: Saved verbatim under a2a/ and graded in a2a/postalform-com-a2a.yml (conformant).
+  - path: /.well-known/agent.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 3417
+    note: Legacy pre-0.3 agent-card path. Byte-identical to agent-card.json; not saved twice.
+  - path: /.well-known/api-catalog
+    status: 200
+    content_type: application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"
+    bytes: 4383
+    file: postalform-com-api-catalog.json
+    standard: RFC 9727 API Catalog (linkset, RFC 9264)
+    note: Nine anchors (a2a, mcp, acp/mcp, ucp/mcp, four machine-order routes, a commerce product feed) each with service-desc, service-doc and status links. The status link for every anchor is https://postalform.com/api/health.
+  - path: /.well-known/apis.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 2681
+    file: postalform-com-apis.json
+    standard: APIs.json 0.20
+    note: Also served at /apis.json (identical). A provider-authored index naming two APIs (Machine Payments API, MCP Server) with Documentation, Pricing, TermsOfService, PrivacyPolicy, StatusPage and APICatalog common pointers.
+  - path: /.well-known/x402
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 1366
+    file: postalform-com-x402.json
+    standard: x402 discovery manifest (version 2)
+    note: Two payable resources (POST /api/machine/orders, POST /api/machine/flower-letters), scheme exact, token USDC, network eip155:8453, facilitator https://api.cdp.coinbase.com/platform/v2/x402, price ranges $3.40-$200.00 and $1.00-$250.00, with validate and status URLs. /.well-known/x402.json alias also 200.
+  - path: /.well-known/ucp
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 1043
+    file: postalform-com-ucp.json
+    standard: UCP (Universal Commerce Protocol) profile 2026-01-11
+    note: Declares dev.ucp.shopping.checkout with an MCP binding at https://postalform.com/ucp/mcp and a Stripe payment handler (card, apple_pay, google_pay, link) carrying a Stripe PUBLISHABLE key (pk_live_, public by design).
+  - path: /.well-known/acp.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 481
+    file: postalform-com-acp.json
+    standard: ACP (Agentic Commerce Protocol) 2025-09-29
+    note: api_base_url https://postalform.com/acp, transports [mcp], services [checkout], currency usd, 22 supported locales.
+  - path: /.well-known/mcp.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 3386
+    file: postalform-com-mcp.json
+    standard: MCP compatibility manifest (schema_version v1)
+    note: endpoint https://postalform.com/mcp, transport streamable-http, protocol_version 2025-11-25, authentication.type none, client setup notes for ChatGPT / Gemini / generic MCP.
+  - path: /.well-known/mcp/server.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 389
+    file: postalform-com-mcp-server.json
+    standard: MCP Registry server.schema.json 2025-12-11
+    note: name com.postalform/postalform, remotes[0] streamable-http https://postalform.com/mcp.
+  - path: /.well-known/mcp/server-card.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 656
+    file: postalform-com-mcp-server-card.json
+    standard: MCP Server Card v1
+  - path: /.well-known/capability-card.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 1568
+    file: postalform-com-capability-card.json
+    note: Referenced from the api-catalog linkset. auth_methods [none], pricing_model pay_per_call, sandbox_available false, human_signup_required false.
+  - path: /.well-known/ai-plugin.json
+    status: 200
+    content_type: application/json; charset=utf-8
+    bytes: 1546
+    file: postalform-com-ai-plugin.json
+    standard: OpenAI ai-plugin manifest v1
+    note: auth.type none, api.type openapi -> https://postalform.com/openapi.json, contact_email support@postalform.com, legal_info_url https://postalform.com/terms.
+  - path: /robots.txt
+    status: 200
+    content_type: text/plain; charset=utf-8
+    bytes: 1339
+    file: postalform-com-robots.txt
+    standard: Content-Signal (robots.txt directive)
+    note: 'Content-Signal: ai-train=yes, search=yes, ai-input=yes. Explicit Allow: / for OAI-SearchBot, GPTBot, ChatGPT-User, PerplexityBot, Perplexity-User, ClaudeBot, anthropic-ai, meta-externalagent, meta-externalfetcher, Google-Extended, Applebot-Extended, Bingbot; only /admin disallowed. Comments list the machine-readable manifests. Saved as the consent/identity signal (ContentSignal pointer).'
+  - path: /.well-known/security.txt
+    status: 404
+    note: RFC 9116 security.txt is not served (text/html 404 page). No SecurityTxt pointer is emitted.
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/oauth-authorization-server
+    status: 404
+  - path: /.well-known/oauth-protected-resource
+    status: 404
+    note: This apex is also the MCP resource host (https://postalform.com/mcp); no RFC 9728 protected-resource metadata is served, consistent with the server requiring no credential.
+  - path: /.well-known/aauth-resource.json
+    status: 404
+  - path: /.well-known/asyncapi.yaml
+    status: 404
+  - path: /.well-known/apievangelist-negative-control-7f3a9c.json
+    status: 404
+    control: negative
+    note: A path that cannot exist. Its 404 proves the host does not echo or catch-all /.well-known/* requests.
+- host: www.postalform.com
+  role: Alias host — the root 301s to the apex, but /.well-known/ documents are served directly
+  documents:
+  - {path: /.well-known/agent-card.json, status: 200, note: 'Served directly (not a redirect).'}
+  - {path: /.well-known/api-catalog, status: 200, note: 'Served directly.'}
+  - {path: /.well-known/ai-plugin.json, status: 200, note: 'Served directly.'}
+  - {path: /.well-known/security.txt, status: 404}
+  - {path: /.well-known/openid-configuration, status: 404}
+  - {path: /.well-known/oauth-authorization-server, status: 404}
+- host: projects.postalform.com
+  role: Second OpenAPI servers[] host — the PostalForm Projects Public API (bearer API keys) and its dashboard
+  documents:
+  - {path: /openapi.json, status: 200, content_type: 'application/json; charset=utf-8', bytes: 62883, file: ../openapi/postalform-com-projects-openapi.json, standard: 'OpenAPI 3.1.0', note: 'Not a /.well-known/ path, recorded here because it is the host''s only served discovery document. /openapi.yaml (45,422 bytes) and /llm-context.txt (2,166 bytes) also 200.'}
+  - {path: /.well-known/agent-card.json, status: 404, note: 'Real JSON 404 ({"error":"Not found"}, 21 bytes) — not an SPA shell.'}
+  - {path: /.well-known/agent.json, status: 404}
+  - {path: /.well-known/security.txt, status: 404}
+  - {path: /.well-known/openid-configuration, status: 404}
+  - {path: /.well-known/oauth-authorization-server, status: 404}
+  - {path: /.well-known/oauth-protected-resource, status: 404}
+  - {path: /.well-known/api-catalog, status: 404}
+  - {path: /.well-known/ai-plugin.json, status: 404}
+  - {path: /.well-known/mcp.json, status: 404}
+  - {path: /llms.txt, status: 404}
+- host: blog.postalform.com
+  role: Blog host (RSS at /rss.xml)
+  documents:
+  - {path: /.well-known/security.txt, status: 404}
+  - {path: /.well-known/agent-card.json, status: 404}
+  - {path: /.well-known/api-catalog, status: 404}
+  - {path: /.well-known/openid-configuration, status: 404}
+  - {path: /.well-known/oauth-authorization-server, status: 404}

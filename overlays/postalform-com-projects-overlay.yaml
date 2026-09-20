@@ -1,0 +1,99 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the PostalForm Projects Public API
+  version: 1.0.0
+extends: ../openapi/postalform-com-projects-openapi.json
+x-generated: '2026-09-19'
+x-method: generated
+x-source: >-
+  Generated from openapi/postalform-com-projects-openapi.json plus https://postalform.com/developer-mail-api
+  and https://projects.postalform.com/llm-context.txt. Captures API Evangelist annotations without mutating
+  the provider's contract. The provider declares operationIds and summaries on all 25 operations and a
+  bearerAuth scheme; the gaps are tags, the key-prefix / test-mode facts that live in prose, an error schema
+  (none declared), the webhook signature header, and a global security requirement (declared per operation
+  only).
+actions:
+- target: $.info
+  update:
+    x-key-prefixes: {test: pf_test_, live: pf_live_}
+    x-test-mode: 'pf_test_ keys simulate uploads, quotes, orders, timelines and webhooks for free and never send physical mail (Mode enum test|live; billing_rail mock_test_credits)'
+    x-idempotency: {mechanism: 'Idempotency-Key header', required_on: [createLetter, createPostcard], replay_status: '200 Idempotent replay (201 on first create)'}
+    x-webhooks: {signature_header: PostalForm-Signature, secret_scope: per endpoint, events: 'postalform.letter.* / postalform.postcard.* (accepted, in_transit, delivered, returned, failed, canceled)', detail: '../asyncapi/postalform-com-projects-webhooks.yml'}
+    x-billing: 'Live orders reserve and capture the quoted amount from prepaid credits; test mode is free'
+    x-provisioning: 'Also provisionable as postalform/mail through Stripe Projects (base https://projects.postalform.com/agentic)'
+    x-docs: https://projects.postalform.com/docs
+- target: $
+  update:
+    security: [{bearerAuth: []}]
+    externalDocs: {description: PostalForm Projects API reference, url: 'https://projects.postalform.com/docs'}
+    tags:
+    - {name: Documents}
+    - {name: Letters}
+    - {name: Postcards}
+    - {name: Return receipts}
+    - {name: Webhooks}
+    - {name: Credits}
+    - {name: API keys}
+- target: $.components.securitySchemes.bearerAuth
+  update: {description: 'Workspace API key. pf_test_ keys simulate everything and never send mail; pf_live_ keys spend prepaid credits and send real mail. Rotate with POST /api/v1/api-keys/rotate (secret returned once).', bearerFormat: 'pf_test_... | pf_live_...'}
+- target: $.paths['/api/v1/documents/upload-intent'].post
+  update: {tags: [Documents]}
+- target: $.paths['/api/v1/documents/{document_id}/complete'].post
+  update: {tags: [Documents]}
+- target: $.paths['/api/v1/letters/quotes'].post
+  update: {tags: [Letters], x-side-effects: none}
+- target: $.paths['/api/v1/letters'].post
+  update: {tags: [Letters], x-agentic-consequence: 'physical (live mode) / none (test mode)'}
+- target: $.paths['/api/v1/letters/{order_id}'].get
+  update: {tags: [Letters]}
+- target: $.paths['/api/v1/letters/{order_id}/document.pdf'].get
+  update: {tags: [Letters]}
+- target: $.paths['/api/v1/letters/{order_id}/return-receipt.pdf'].get
+  update: {tags: ['Return receipts']}
+- target: $.paths['/api/v1/return-receipts/export.zip'].get
+  update: {tags: ['Return receipts']}
+- target: $.paths['/api/v1/postcards/quotes'].post
+  update: {tags: [Postcards], x-side-effects: none}
+- target: $.paths['/api/v1/postcards'].post
+  update: {tags: [Postcards], x-agentic-consequence: 'physical (live mode) / none (test mode)'}
+- target: $.paths['/api/v1/postcards/{order_id}'].get
+  update: {tags: [Postcards]}
+- target: $.paths['/api/v1/postcards/{order_id}/document.pdf'].get
+  update: {tags: [Postcards]}
+- target: $.paths['/api/v1/webhook-endpoints'].get
+  update: {tags: [Webhooks]}
+- target: $.paths['/api/v1/webhook-endpoints'].post
+  update: {tags: [Webhooks]}
+- target: $.paths['/api/v1/webhook-endpoints/{endpoint_id}'].delete
+  update: {tags: [Webhooks]}
+- target: $.paths['/api/v1/webhook-endpoints/{endpoint_id}/rotate-secret'].post
+  update: {tags: [Webhooks]}
+- target: $.paths['/api/v1/webhook-events'].get
+  update: {tags: [Webhooks]}
+- target: $.paths['/api/v1/webhook-events/{event_id}/replay'].post
+  update: {tags: [Webhooks]}
+- target: $.paths['/api/v1/credits/balance'].get
+  update: {tags: [Credits]}
+- target: $.paths['/api/v1/credits/payment-methods'].get
+  update: {tags: [Credits]}
+- target: $.paths['/api/v1/credits/payment-methods/setup-session'].post
+  update: {tags: [Credits]}
+- target: $.paths['/api/v1/credits/auto-refill'].get
+  update: {tags: [Credits]}
+- target: $.paths['/api/v1/credits/auto-refill'].post
+  update: {tags: [Credits]}
+- target: $.paths['/api/v1/credits/ledger'].get
+  update: {tags: [Credits]}
+- target: $.paths['/api/v1/credits/checkout-session'].post
+  update: {tags: [Credits]}
+- target: $.paths['/api/v1/api-keys'].get
+  update: {tags: ['API keys']}
+- target: $.paths['/api/v1/api-keys/rotate'].post
+  update: {tags: ['API keys']}
+- target: $.components.schemas
+  description: The contract declares no error schema; 400/404/410/413 carry descriptions only. Proposed shape, marked as a proposal.
+  update:
+    x-proposed-Error:
+      type: object
+      description: 'PROPOSAL by API Evangelist — not declared by the provider. The served error body shape for this API was not observed (all operations require a key).'
+      properties: {message: {type: string}, code: {type: string}}

@@ -1,0 +1,60 @@
+generated: '2026-09-19'
+method: searched
+source: https://postalform.com/agents
+docs:
+- https://postalform.com/mpp.md
+- https://postalform.com/developers
+probed:
+- {url: 'https://postalform.com/api/machine/forms?limit=3', method: GET, status: 200, fetched: '2026-09-19', rate_limit_headers_observed: none, other_headers: [x-request-id, cache-control public max-age=300, strict-transport-security]}
+- {url: 'https://postalform.com/api/machine/orders/validate', method: POST, status: 422, fetched: '2026-09-19', rate_limit_headers_observed: none}
+limit_count: 2
+summary: >-
+  PostalForm documents that throttling EXISTS on two surfaces — address searches and unpaid order creation —
+  with the exhaustion signal (HTTP 429, code rate_limited) and the instruction "slow down ... and retry
+  later", but publishes no numeric ceiling, no window and no response headers. No X-RateLimit-*, RateLimit-*
+  or Retry-After header was declared in either OpenAPI or observed on live responses; the only per-request
+  header is x-request-id. The Projects API documents no rate limit at all. What IS published in numbers is a
+  set of size limits, recorded separately below.
+rate_limits:
+- name: Address search throttle
+  scope: per-client (unspecified)
+  limit: null
+  window: null
+  metric: address searches
+  applies_to: [postalform.search_addresses (MCP)]
+  exhaustion_status: 429
+  exhaustion_code: rate_limited
+  headers: []
+  source: 'https://postalform.com/agents — "429 (rate_limited): slow down address searches and retry later."'
+  note: Number and window not published.
+- name: Unpaid order creation throttle
+  scope: per-client (unspecified)
+  limit: null
+  window: null
+  metric: unpaid create calls
+  applies_to: [createMachineOrder, createMppMachineOrder, createMachineFlowerLetter, createMppMachineFlowerLetter, createMppShippingLabel]
+  exhaustion_status: 429
+  exhaustion_code: rate_limited
+  headers: []
+  source: 'https://postalform.com/mpp.md — "429 rate_limited: slow down unpaid order creation and retry later."'
+  note: >-
+    Number and window not published. Related, not a rate limit: PostalForm "only collapses recent unpaid
+    duplicate drafts" for the same request_id, so repeated unpaid creates with one request_id do not multiply
+    orders.
+size_and_time_limits:
+- {name: PDF upload (web / machine), limit: 100 MB, source: https://postalform.com/llms.txt}
+- {name: Page count (default standard route), limit: '199 pages single-sided / 398 double-sided', source: https://postalform.com/llms.txt}
+- {name: PDF upload (Projects), limit: '25 MiB (byte_size maximum 26214400)', exhaustion_status: 'request rejected', source: openapi/postalform-com-projects-openapi.json createUploadIntent}
+- {name: Letter body, limit: '20,000 characters; title 200; signature text 2,000', source: openapi/postalform-com-machine-payments-openapi.json MachineOrderRequest.letter}
+- {name: Workflow-form inline attachments, limit: '12 MB combined after base64 decoding (attachments_max_total_size_mb)', source: https://postalform.com/developers}
+- {name: Flower card note, limit: 200 characters, source: openapi info.description}
+- {name: Forms catalog page, limit: 'limit 1-200 per page (cursor pagination)', source: openapi listMachineForms}
+- {name: Return-receipt export (Projects), limit: '500 receipts or 25 MiB', exhaustion_status: 413, source: openapi exportReturnReceipts}
+- {name: Order status tracking events, limit: 'latest 50 public tracking events', source: MCP tool postalform.get_order_status description}
+- {name: Machine order price, limit: '$3.40 - $200.00 per order; flowers $1.00 - $250.00', source: well-known/postalform-com-x402.json}
+exhaustion:
+  status: 429
+  code: rate_limited
+  headers: []
+  media_type: application/json (MachineErrorResponse)
+  retry_guidance: 'Documented as "slow down and retry later"; no Retry-After value.'

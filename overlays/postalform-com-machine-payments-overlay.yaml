@@ -1,0 +1,113 @@
+overlay: 1.0.0
+info:
+  title: API Evangelist enhancements for the PostalForm Machine Payments API
+  version: 1.0.0
+extends: ../openapi/postalform-com-machine-payments-openapi.json
+x-generated: '2026-09-19'
+x-method: generated
+x-source: >-
+  Generated from openapi/postalform-com-machine-payments-openapi.json plus the probed and searched artifacts
+  in this repo. Captures API Evangelist annotations without mutating the provider's contract. The provider
+  already declares operationIds and summaries on all 17 operations; the gaps this overlay fills are tags
+  (none declared), an externalDocs link, the undeclared `help` block observed on every live error, the
+  rate-limit and reversal facts that live in prose, and the 402 headers the flow depends on.
+actions:
+- target: $.info
+  description: Link the provider's other machine-readable surfaces and record the payment gate from the contract.
+  update:
+    x-agent-card: https://postalform.com/.well-known/agent-card.json
+    x-mcp-server: https://postalform.com/mcp
+    x-api-catalog: https://postalform.com/.well-known/api-catalog
+    x-apis-json: https://postalform.com/apis.json
+    x-x402-manifest: https://postalform.com/.well-known/x402
+    x-llms-txt: https://postalform.com/llms.txt
+    x-skill: https://postalform.com/skill.md
+    x-payment:
+      protocols: [x402, mpp]
+      x402: {asset: USDC, network: 'eip155:8453', facilitator: 'https://api.cdp.coinbase.com/platform/v2/x402', challenge_header: PAYMENT-REQUIRED, retry_header: PAYMENT-SIGNATURE, receipt_header: PAYMENT-RESPONSE}
+      mpp: {methods: [tempo, stripe_spt, card], challenge_header: 'WWW-Authenticate: Payment', retry_header: 'Authorization: Payment', receipt_header: Payment-Receipt}
+      challenge_status: 402
+      settlement_pending_status: 202 settled_pending_webhook
+    x-idempotency: {mechanism: 'request_id (body, UUID)', coverage: 'every POST on this contract', drift_response: '409 request_id_mismatch'}
+    x-rate-limits:
+    - {scope: unpaid order creation, limit: unpublished, exhaustion_status: 429, code: rate_limited, headers: []}
+    - {scope: address searches (MCP), limit: unpublished, exhaustion_status: 429, code: rate_limited, headers: []}
+    x-reversibility: {cancel_operation: none, window: 'before printing or carrier handoff begins (discretionary); Express orders cannot be canceled after payment', contact: 'support@postalform.com', docs: 'https://postalform.com/terms#5'}
+- target: $
+  description: The contract declares no externalDocs; point at the agent guide.
+  update:
+    externalDocs: {description: PostalForm agents guide (x402 / MPP flows), url: 'https://postalform.com/agents'}
+- target: $
+  description: Declare the tags the operations below are grouped under (the provider declares none).
+  update:
+    tags:
+    - {name: Forms, description: Workflow-form catalog and schemas}
+    - {name: Orders (x402), description: Document mail orders paid through x402}
+    - {name: Orders (MPP), description: Document mail orders paid through MPP}
+    - {name: Flower letters (x402)}
+    - {name: Flower letters (MPP)}
+    - {name: Shipping labels (MPP)}
+- target: $.paths['/api/machine/forms'].get
+  update: {tags: [Forms]}
+- target: $.paths['/api/machine/forms/{slug}/schema'].get
+  update: {tags: [Forms]}
+- target: $.paths['/api/machine/orders/validate'].post
+  update: {tags: ['Orders (x402)'], x-side-effects: none, x-dry-run-for: createMachineOrder}
+- target: $.paths['/api/machine/orders'].post
+  update:
+    tags: ['Orders (x402)']
+    x-agentic-consequence: physical
+    x-human-in-the-loop: 'provider recommends owner approval and a spend cap before answering the 402'
+- target: $.paths['/api/machine/orders/{id}'].get
+  update: {tags: ['Orders (x402)'], x-id-accepts: 'canonical order_id or any aliased request_id'}
+- target: $.paths['/api/machine/flower-letters/validate'].post
+  update: {tags: ['Flower letters (x402)'], x-side-effects: none}
+- target: $.paths['/api/machine/flower-letters'].post
+  update: {tags: ['Flower letters (x402)'], x-agentic-consequence: physical}
+- target: $.paths['/api/machine/flower-letters/{id}'].get
+  update: {tags: ['Flower letters (x402)']}
+- target: $.paths['/api/machine/mpp/orders/validate'].post
+  update: {tags: ['Orders (MPP)'], x-side-effects: none, x-dry-run-for: createMppMachineOrder}
+- target: $.paths['/api/machine/mpp/orders'].post
+  update: {tags: ['Orders (MPP)'], x-agentic-consequence: physical}
+- target: $.paths['/api/machine/mpp/orders/{id}'].get
+  update: {tags: ['Orders (MPP)']}
+- target: $.paths['/api/machine/mpp/flower-letters/validate'].post
+  update: {tags: ['Flower letters (MPP)'], x-side-effects: none}
+- target: $.paths['/api/machine/mpp/flower-letters'].post
+  update: {tags: ['Flower letters (MPP)'], x-agentic-consequence: physical}
+- target: $.paths['/api/machine/mpp/flower-letters/{id}'].get
+  update: {tags: ['Flower letters (MPP)']}
+- target: $.paths['/api/machine/mpp/shipping-labels/validate'].post
+  update: {tags: ['Shipping labels (MPP)'], x-side-effects: none}
+- target: $.paths['/api/machine/mpp/shipping-labels'].post
+  update: {tags: ['Shipping labels (MPP)'], x-agentic-consequence: physical}
+- target: $.paths['/api/machine/mpp/shipping-labels/{id}'].get
+  update: {tags: ['Shipping labels (MPP)']}
+- target: $.paths['/api/machine/orders'].post.responses['402']
+  description: The x402 challenge header is documented in prose but not declared on the response.
+  update:
+    headers:
+      PAYMENT-REQUIRED: {description: 'x402 payment requirements (scheme exact, USDC, eip155:8453). Retry the identical request with PAYMENT-SIGNATURE.', schema: {type: string}}
+- target: $.paths['/api/machine/mpp/orders'].post.responses['402']
+  description: The MPP challenge header is documented in prose but not declared on the response.
+  update:
+    headers:
+      WWW-Authenticate: {description: 'One "Payment ..." challenge per configured MPP method (tempo, stripe, card). Retry the identical request with Authorization: Payment <credential>.', schema: {type: string}}
+- target: $.components.schemas.MachineErrorResponse.properties
+  description: Every live error response carried an undeclared `help` object (observed 2026-09-19 on 422 and 404). Declared here so agents can rely on it; not a mutation of the provider's schema.
+  update:
+    help:
+      type: object
+      description: Machine-readable pointers returned with every error (observed, not declared by the provider).
+      properties:
+        docs: {type: string, format: uri}
+        developer_docs: {type: string, format: uri}
+        openapi: {type: string, format: uri}
+        mcp_server: {type: string, format: uri}
+        infra_console: {type: string, format: uri}
+        support_email: {type: string, format: email}
+- target: $.components.schemas.MachineErrorResponse
+  description: 'Two 404 shapes were observed: orders return {"message"}, forms return {"error"}; neither carries the required "code". Flagged for the provider.'
+  update:
+    x-observed-inconsistency: 'GET /api/machine/forms/{slug}/schema 404 body uses "error" instead of "message" and omits "code".'

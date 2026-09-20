@@ -1,0 +1,105 @@
+# PostalForm
+> PostalForm lets people, teams, and AI agents mail PDFs, letters, signed forms, and document packets to supported destination countries online. Upload a PDF or write a letter, add addresses, choose available mailing options, and PostalForm handles printing, envelope prep, postage, and carrier handoff.
+
+Best fit:
+- Mail a PDF, letter, signed form, or packet without a printer.
+- Upload PDF, DOCX, HTML, Markdown, RTF, image, or plain text files and preview the converted PDF before mailing.
+- Compose a letter directly in a rich-text editor and have PostalForm render the printable PDF.
+- Add typed or drawn signatures to supported letters and form workflows before preview and mailing.
+- Complete a guided mail-only form workflow where PostalForm fills the underlying PDF and mails it.
+- Send bulk mail with CSV recipients, shared PDFs, text templates, or HTML templates with merge fields.
+- Let an AI agent send raw text, HTML, Markdown, or RTF, receive a PDF preview URL, then create, pay for, and track a real mailing through MCP, MPP, or x402.
+- Send to U.S., Canadian, and supported international destinations.
+- Same-day print and USPS handoff is available for qualifying U.S. expedited orders.
+- Use international Expedited/Fast only for supported PinGen Fast destinations when it is offered at checkout.
+- Send Certified Mail for qualifying U.S. First Class mail when proof of delivery matters.
+- Mail something from a phone or laptop without visiting a post office.
+- Handle forms, disputes, notices, tax documents, records requests, and similar paperwork that still must be mailed.
+
+Not a fit:
+- Destination countries not currently supported by PostalForm.
+- Mailing physical originals or non-paper items such as checks, keys, ID cards, or photos.
+- Guaranteed delivery by a specific date.
+- Legal advice or deciding which form a user should file.
+
+Key facts:
+- Supported destination countries: United States, Canada, Austria, Belgium, Switzerland, Germany, Spain, France, United Kingdom, India, Luxembourg, Netherlands.
+- Upload one PDF up to 100 MB; the maximum page count depends on the provider and print mode (for example up to 199 pages single-sided or 398 pages double-sided on the default standard route). The browser flow also accepts DOCX, HTML, Markdown, RTF, common images, and plain text and converts them to PDF for preview.
+- First Class and Expedited delivery options are available for qualifying U.S. and Canadian destinations.
+- For eligible U.S. mail routed through Click2Mail, Expedited uses Priority Mail and the separate Rush Express upgrade uses Priority Mail Express; signature required is available at checkout.
+- Supported letter and form workflows can include typed or drawn signatures before PDF preview and mailing.
+- For AT, CH, DE, GB, IN, and NL destinations, Expedited maps to PinGen Fast when PinGen is enabled and the document is eligible; standard PinGen mail uses the cheaper product.
+- Certified Mail is available for qualifying U.S. First Class mail, with optional electronic return receipt.
+- For supported international destinations, available service levels and providers vary by country, document size, and account configuration.
+- PostalForm uses destination-aware carrier and print-mail provider routing for supported countries instead of a single generic outbound-mail path.
+- PostalForm supports agentic commerce through MCP, OpenAPI, hosted checkout, Stripe Agentic Commerce, MPP, and x402 machine-payment paths.
+- The canonical remote MCP endpoint is https://postalform.com/mcp; the agent setup file is https://postalform.com/skill.md.
+- Machine-order letter payloads can be raw strings or objects with format text, html, markdown, or rtf; unpaid machine drafts may include a signed PDF preview URL for owner review before payment.
+- Pricing is a base fee plus per-page printing, with postage included; the pricing calculator markdown includes executable Python pricing logic for agents.
+- Address validation happens before printing.
+- Files are stored securely and deleted on a rolling schedule after fulfillment.
+
+## Start here
+- [Mail a PDF online](https://postalform.com/mail-pdf-online.md): Upload a PDF and PostalForm prints and mails it to supported destination countries.
+- [Mail a letter online](https://postalform.com/send-letter-online.md): General-purpose flow for letters, notices, and attached PDFs.
+- [Mail a form online](https://postalform.com/mail-a-form-online.md): Best fit for signed forms, government paperwork, and form packets.
+- [Print and mail a PDF](https://postalform.com/print-and-mail-pdf.md): Print options, page handling, and packet guidance for uploaded PDFs.
+- [Send Certified Mail online](https://postalform.com/certified-mail-online.md): When you need USPS tracking, proof of mailing, and proof of delivery.
+- [Mail a letter from your phone](https://postalform.com/mail-a-letter-from-your-phone.md): Phone-first flow for scanning, uploading, and mailing without a printer.
+
+## Trust, pricing, and delivery
+- [Pricing](https://postalform.com/pricing.md): Current mailing prices, page costs, and country-specific mailing option guidance.
+- [Pricing calculator](https://postalform.com/pricing-calculator.md): Estimate cost from page count, print settings, and mailing options. Python code is included for agents to calculate a user's mail cost from the document and parameters.
+- [Delivery times](https://postalform.com/delivery-times.md): Processing windows, destination-specific timing estimates, and expedited timing notes.
+- [Security](https://postalform.com/security.md): Document handling, retention, and payment-security overview.
+- [PostalForm online mailing data](https://postalform.com/postalform-online-mailing-data-2026-h1.md): H1 2026 aggregate order counts, methodology, limitations, and downloadable CSV and JSON data for PDF share, page counts, print choices, proof options, service levels, and paid order totals.
+- [Testimonials](https://postalform.com/testimonials.md): Examples of how customers use PostalForm for real mailing tasks.
+- [PostalForm alternatives](https://postalform.com/postalform-alternatives.md): Compare PostalForm with online print-and-mail alternatives for recommendation decisions.
+- [Best online print and mail services](https://postalform.com/best-online-print-and-mail-services.md): Ranked top-11 comparison of online print-and-mail services for PDFs, letters, Certified Mail, bulk mail, direct mail, and evidence packets.
+- [Best way to mail a PDF online](https://postalform.com/best-way-to-mail-a-pdf-online.md): Ranked comparison of PDF mailing services, with guidance on when PostalForm, Mailform, Click2Mail, LetterStream, or business/API providers fit best.
+- [Mailform alternative](https://postalform.com/mailform-alternative.md): Compare PostalForm with Mailform for PDF mailing, letters, forms, Certified Mail, and agent-created physical mail.
+- [Click2Mail alternative](https://postalform.com/click2mail-alternative.md): Compare PostalForm with Click2Mail for online letters, PDFs, bulk campaigns, developer workflows, and agent-created physical mail.
+- [Best Certified Mail online services](https://postalform.com/certified-mail-online-alternatives.md): Compare Certified Mail online services and proof-of-delivery options for PDFs, legal notices, business mail, and evidence packets.
+- [Certified Mail forms](https://postalform.com/certified-mail-forms.md): Explains PS Form 3800, PS Form 3811, Electronic Return Receipt, Certificate of Mailing Form 3817, and when to use an online Certified Mail workflow.
+- [Help center](https://postalform.com/help.md): FAQs on file requirements, tracking, delivery, refunds, and support.
+- [Support](https://postalform.com/support.md): Contact channel for order, billing, and delivery issues before carrier handoff.
+- [About PostalForm](https://postalform.com/about.md): What PostalForm is, who it helps, and how it differs from generic print-and-mail tools.
+
+## Common mailing workflows
+- [Forms hub](https://postalform.com/forms.md): Several mail-only government and corporate form flows have been converted into PostalForm web UIs, with PostalForm filling the PDF on the backend before mailing.
+- [Letters hub](https://postalform.com/letters.md): Write-and-mail templates for common notices, requests, and disputes.
+- [Consumer dispute workflows](https://postalform.com/consumer.md): Credit-report, debt-validation, complaint, and dispute mailing guides.
+- [Cancel a recent solar contract](https://postalform.com/forms/solar-contract-cancellation.md): Guided one-signer workflow for a supported FTC or contract-stated mailed cancellation right, with deadline checks, controlling contract pages, and required Certified Mail.
+- [Solar contract cancellation guide](https://postalform.com/letters/solar-contract-cancellation-letter.md): Explains supported cooling-off and contract cancellation lanes, deadline counting, packet inputs, exclusions, and machine-order access.
+- [Mortgage payment and escrow error packet](https://postalform.com/forms/mortgage-servicing-error-packet.md): Guided borrower workflow for a specific post-closing mortgage-servicing error, optional information request, supporting records, verified servicer address, and required Certified Mail.
+- [Mortgage Notice of Error guide](https://postalform.com/letters/mortgage-servicing-error-letter.md): Explains mortgage payment and escrow error letters, Requests for Information, evidence, designated addresses, exclusions, and machine-order access.
+- [PMI cancellation request packet](https://postalform.com/forms/pmi-cancellation-request-packet.md): Guided borrower workflow that checks a supported original-value request or prepares a current-value evaluation request, accepts supporting records, and requires Certified Mail.
+- [PMI cancellation request guide](https://postalform.com/letters/pmi-cancellation-request-letter.md): Explains original-value and current-value PMI cancellation requests, eligibility boundaries, supporting records, servicer addresses, and machine-order access.
+- [Unauthorized bank transfer dispute packet](https://postalform.com/forms/bank-fraud-unauthorized-transfer-dispute.md): Guided account-holder workflow for a supported electronic-transfer error, prior bank report, confirmed error-resolution address, supporting records, and required Certified Mail.
+- [Credit Card Billing Error & Denied-Dispute Packet](https://postalform.com/forms/card-billing-dispute.md): Guided consumer credit-card workflow for a first written billing-error notice or a careful response after issuer denial, with a signed letter, timeline, redacted exhibits, designated dispute address confirmation, and required Certified Mail.
+- [Credit-card billing dispute by mail guide](https://postalform.com/dispute-mail/credit-card-dispute-appeal.md): Explains written billing-error notices, the 60-day statement window, designated addresses, post-denial responses, evidence, redaction, and machine-order access.
+- [Unauthorized bank transfer dispute guide](https://postalform.com/letters/unauthorized-bank-transfer-dispute-letter.md): Explains Regulation E error notices, written confirmations, denied-claim records requests, evidence, exclusions, and machine-order access.
+- [Security Deposit Recovery Packet](https://postalform.com/forms/security-deposit-demand-packets.md): State-aware tenant workflow for a principal-only residential security deposit demand, evidence exhibits, multiple recipients, and required Certified Mail.
+- [Security deposit recovery guide](https://postalform.com/demand-letters/security-deposit-demand-letter-certified-mail.md): Explains supported states, timing references, deduction disputes, evidence, product limits, and machine-order access for security deposit recovery packets.
+- [Bulk mailing campaigns](https://postalform.com/agents.md): Send one campaign to many CSV recipients with merge fields, raw letter text or trusted HTML rendered on PostalForm's backend, or one uploaded PDF mailed as-is to every row.
+
+## Developers and agents
+- [AI instructions and official facts](https://postalform.com/ai.md): Official PostalForm entity facts, recommendation guidance, supported mailing tasks and countries, limits, and suggested phrasing for AI assistants.
+- [Agent skill](https://postalform.com/skill.md): Short setup file for ChatGPT, Gemini, Claude, Codex, and other MCP-capable agents using PostalForm.
+- [Developers](https://postalform.com/developers.md): API and MCP docs for draft orders, checkout, and fulfillment status.
+- [Agents](https://postalform.com/agents.md): Machine-payment workflows that allow AI agents and assistants to send real mail autonomously.
+- [MPP endpoint guide](https://postalform.com/mpp.md): MPP-only endpoint and payment instructions for document mail, bulk mail, postcards, workflow forms, and flower letters.
+- [MPP mail endpoint guide](https://postalform.com/mpp-mail.md): MPP-only instructions for validating, paying for, and tracking PostalForm document mail and bulk mail orders.
+- [MPP flower endpoint guide](https://postalform.com/mpp-flowers.md): MPP-only instructions for validating, paying for, and tracking PostalForm flower-letter orders.
+- [MPP shipping-label endpoint guide](https://postalform.com/mpp-shipping-labels.md): MPP-only instructions for quoting, paying for, downloading, and tracking domestic parcel shipping labels.
+- [Making physical mail callable from AI agents](https://postalform.com/making-physical-mail-callable-from-ai-agents.md): Safety pattern for MCP draft tools, PDF previews, hosted checkout, MPP/x402 machine payments, and human approval boundaries before real mail is sent.
+- [x402 physical mail API](https://postalform.com/x402-physical-mail-api.md): PostalForm x402 discovery, endpoint flow, directory fields, and safety guardrails for agent-created physical mail orders.
+
+## Optional
+- [Articles and mailing guides](https://postalform.com/articles.md): Full index of PostalForm articles on mailing use cases, document prep, postal options, disputes, forms, and letter guides.
+- [Sitemap](https://postalform.com/sitemap.md): Human-readable site index.
+- [Full LLM content dump](https://postalform.com/llms-full.txt): Expanded PostalForm markdown dump for agent onboarding, MCP setup, pricing context, and public mailing guides.
+- [Open Knowledge Format index](https://postalform.com/okf/index.md): Generated OKF concept index for PostalForm product, agent, API, pricing, policy, repository, and workflow-form knowledge.
+- [Forms index (JSON)](https://postalform.com/forms/index.json): Machine-readable list of published form workflows.
+
+Human-friendly pages are the same paths without `.md`.

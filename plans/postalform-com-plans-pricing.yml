@@ -1,0 +1,67 @@
+generated: '2026-09-19'
+method: searched
+source: https://postalform.com/pricing
+docs:
+- https://postalform.com/pricing-calculator
+- https://postalform.com/.well-known/x402
+- https://postalform.com/developer-mail-api
+- https://projects.postalform.com/pricing
+plan_count: 3
+currency: USD
+model: >-
+  Pay per mailpiece, no subscription, no tiers. One price model (base fee + per-page printing, postage
+  included, add-ons at checkout) is charged through three settlement paths: hosted checkout (Stripe card /
+  Apple Pay / Google Pay / Link), machine payments (x402 USDC on Base, or MPP via Tempo / Stripe shared
+  payment token / card) at the same quoted total, and PostalForm Projects prepaid credits for API-key
+  integrations. Projects test mode is free.
+summary: >-
+  Every order starts with a $3.00 base fee; black-and-white pages are $0.20 each and color pages $0.40; a
+  First Class letter carries an inserted address page, so a one-page letter is billed as two pages and
+  "starts at about $3.40" (the x402 manifest's minPrice). Certified Mail, Electronic Return Receipt, Express
+  and signature-required add-ons are priced at checkout; the provider's own Python pricing model (published
+  on the pricing-calculator page for agents) states the constants below. The checkout or validate quote is
+  always the source of truth for a real order.
+plans:
+- id: pay-per-order
+  name: Pay per order (web, MCP hosted checkout)
+  price: from 3.40
+  currency: USD
+  period: per mailpiece
+  billing: Stripe-hosted checkout; no account needed
+  included: printing on US letter paper, envelope, postage, address validation
+  components:
+  - {item: base fee, price: 3.00, source: 'https://postalform.com/pricing — "Every order starts with a $3.00 base fee."'}
+  - {item: black-and-white page, price: 0.20, unit: per billable page}
+  - {item: color page, price: 0.40, unit: per billable page}
+  - {item: address page, note: 'First Class inserts an address page counted as a billable page (1-page letter = 2 billable pages = $3.40)'}
+  - {item: over-6-sheets handling, price: 5.50, source: 'pricing-calculator STANDARD_OVER_6_SHEETS_FEE'}
+  - {item: packet tier one, price: 10.88, source: 'pricing-calculator STANDARD_TIER_ONE_FEE'}
+  - {item: packet tier two, price: 22.38, source: 'pricing-calculator STANDARD_TIER_TWO_FEE'}
+  - {item: Express (Priority Mail Express / expedited), price: 16.00, source: 'pricing-calculator STANDARD_EXPRESS_FEE'}
+  - {item: Certified Mail, price: 8.00, source: 'pricing-calculator STANDARD_CERTIFIED_FEE'}
+  - {item: Electronic Return Receipt, price: 3.00, source: 'pricing-calculator STANDARD_CERTIFIED_RETURN_RECEIPT_FEE'}
+  worked_examples:
+  - {scenario: '1-page B&W First Class letter', price: 3.40}
+  - {scenario: '10-page B&W packet', price: 5.20}
+  - {scenario: '50-page B&W packet', price: 18.70}
+  - {scenario: '3 pages standard vs Certified (homepage widget)', price: '3.80 standard, 11.80 Certified'}
+  limits: ['one PDF up to 100 MB', 'up to 199 pages single-sided or 398 double-sided on the default route', '12 destination countries']
+- id: machine-payments
+  name: Machine payments (x402 / MPP)
+  price: '3.40 - 200.00 (documents); 1.00 - 250.00 (flower letters)'
+  currency: USD (USDC on Base for x402)
+  period: per order
+  billing: HTTP 402 challenge; x402 scheme exact, token USDC, network eip155:8453, facilitator api.cdp.coinbase.com; MPP via Tempo, Stripe SPT or card-MPP
+  source: well-known/postalform-com-x402.json (pricingMode range / dynamic) and openapi x-payment-info {minPrice 3.40, maxPrice 200.00}
+  note: Same underlying price model as pay-per-order; the quote comes from the free validate endpoint. Shipping labels (MPP-only) are priced from live carrier rates at validate time.
+- id: projects-prepaid-credits
+  name: PostalForm Projects (API keys, prepaid credits)
+  price: usage-based
+  currency: USD
+  period: per order, drawn from prepaid credits
+  billing: 'Live orders reserve and capture the quoted amount from the workspace credit ledger (getCreditBalance, createCreditCheckoutSession, configureCreditAutoRefill). "No subscription or minimum commitment."'
+  free_tier: 'Test mode is free: pf_test_ keys simulate uploads, quotes, orders, timelines and webhooks and never send mail.'
+  quotes: 'createLetterQuote / createPostcardQuote return the final price_cents and a pricing_version before an order is created; quotes expire (expires_at).'
+  source: https://postalform.com/developer-mail-api.md; per-piece prices at https://projects.postalform.com/pricing (JS-rendered calculator, not extracted)
+  limits: ['25 MiB PDF upload', 'return-receipt export 500 receipts or 25 MiB']
+enterprise: 'No enterprise or volume tier is published. Bulk mailing campaigns (CSV recipients) use the same per-piece pricing.'

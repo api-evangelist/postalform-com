@@ -1,0 +1,196 @@
+generated: '2026-09-19'
+method: searched
+source: https://postalform.com/developers
+derived_from:
+- openapi/postalform-com-machine-payments-openapi.json
+- openapi/postalform-com-projects-openapi.json
+- mcp/postalform-com-mcp-tools.json
+docs:
+- https://postalform.com/agents
+- https://postalform.com/mpp.md
+- https://postalform.com/developer-mail-api
+- https://postalform.com/terms
+- https://postalform.com/help/refunds-cancellations-and-usps-delays
+base_urls:
+  machine_payments_api: https://postalform.com
+  projects_api: https://projects.postalform.com/api/v1
+  mcp: https://postalform.com/mcp
+media_type: application/json (MPP 402 responses are application/problem+json)
+auth:
+  style: >-
+    Three surfaces, three postures. (1) Machine Payments API — NO credential of any kind; the gate is
+    payment: an unpaid POST returns HTTP 402 with an x402 PAYMENT-REQUIRED header or MPP WWW-Authenticate:
+    Payment challenges, and the retry carries PAYMENT-SIGNATURE or Authorization: Payment. (2) MCP server —
+    no credential to connect or list tools; money-moving tools are gated by hosted checkout, a buyer-approved
+    Stripe shared payment token (spt_...) or the same 402 challenges. (3) Projects API — HTTP bearer API key
+    per workspace, pf_test_ (simulated, free) or pf_live_ (prepaid credits, real mail), rotatable via
+    rotateApiKey with the secret returned once. No OAuth anywhere.
+  detail: authentication/postalform-com-authentication.yml
+idempotency:
+  supported: true
+  coverage: partial
+  mechanism: >-
+    Two mechanisms with one semantic. Machine Payments API: request_id (UUID, REQUIRED in the body of every
+    POST) is "the strict idempotency key" — the same request_id with a byte-identical body replays or resumes
+    the order (this is how the 402 retry works), the same request_id with a different body returns 409
+    request_id_mismatch, and PostalForm "only collapses recent unpaid duplicate drafts", so a legitimate
+    second mailing needs a fresh UUID. Projects API: an Idempotency-Key request header, REQUIRED on
+    createLetter and createPostcard; a replay returns 200 "Idempotent replay" (201 on first create) and
+    "retrying the same quote with the same key returns the existing order instead of creating another one".
+    MCP: an optional request_id argument on the draft, upload and machine-order tools; complete_checkout is
+    retried with the same checkout_session_id and token ("an unverified or processing payment must not prompt
+    another order or replacement payment"), and PostalForm confirms the existing PaymentIntent "using a
+    stable Stripe idempotency key".
+  header: 'Idempotency-Key (Projects only)'
+  body_field: 'request_id (Machine Payments API, all POSTs; MCP tools, optional)'
+  key_format: 'client-generated UUID (machine API: format uuid); free-form string on Projects (docs example "invoice-1042")'
+  retention: 'undocumented as a duration; machine API collapses "recent unpaid" drafts only'
+  conflict_behavior: '409 request_id_mismatch on payload drift (machine API); Projects behaviour on a key reused with a different quote is not documented'
+  scope:
+  - validateMachineOrder
+  - createMachineOrder
+  - validateMachineFlowerLetter
+  - createMachineFlowerLetter
+  - validateMppMachineOrder
+  - createMppMachineOrder
+  - validateMppMachineFlowerLetter
+  - createMppMachineFlowerLetter
+  - validateMppShippingLabel
+  - createMppShippingLabel
+  - createLetter
+  - createPostcard
+  - complete_checkout (MCP, by checkout_session_id + token)
+  coverage_basis: >-
+    Counted against the mutating surface of both contracts: the Machine Payments API's 10 POSTs ALL carry the
+    key (10/10 — Stripe-shaped for that contract), while the Projects API carries it on 2 of its 14 writes
+    (createLetter, createPostcard). The 12 uncovered Projects writes are non-committing or configuration
+    operations — upload intents, quotes (idempotent by nature, they create a priced quote_id), webhook
+    endpoint create/disable/rotate, event replay, credit checkout/setup sessions, auto-refill config and key
+    rotation — none of which produces mail or spends credit directly. Every operation that PRINTS MAIL or
+    SPENDS MONEY, on every surface, is covered. Recorded as partial because the rule is literal about "all
+    writes"; a reader should know this is the opposite of a cosmetic 2-of-99 mechanism.
+  docs:
+  - https://postalform.com/openapi.json (info.description, MachineOrderRequest.request_id)
+  - https://postalform.com/developer-mail-api
+dry_run_mode:
+  supported: true
+  status: verified
+  mechanism: dedicated validate twin for every paid create, plus a free simulated test mode on Projects
+  surfaces:
+  - {operation: validateMachineOrder, description: 'POST /api/machine/orders/validate — full validation and a quote with no payment side effects. Live probe 2026-09-19: the route exists (422 with the field-level errors[] on an empty body).'}
+  - {operation: validateMppMachineOrder}
+  - {operation: validateMachineFlowerLetter}
+  - {operation: validateMppMachineFlowerLetter}
+  - {operation: validateMppShippingLabel, description: 'returns live carrier rates before purchase'}
+  - {operation: createLetterQuote / createPostcardQuote, surface: Projects, description: 'final price_cents and pricing_version before any order exists'}
+  - {operation: 'pf_test_ keys', surface: Projects, description: 'the whole flow — uploads, quotes, orders, timelines, webhooks — simulated for free; never sends mail'}
+  - {operation: postalform.preview_letter_order_draft, surface: MCP, description: 'readOnlyHint true; renders and validates without writing'}
+  detail: sandbox/postalform-com-sandbox.yml
+reversibility:
+  grade: documented
+  docs: https://postalform.com/terms
+  note: >-
+    A reversal path exists (cancel-and-refund by contacting support before production) and a state boundary
+    is stated ("before printing or carrier handoff begins"), but the reversal is discretionary ("we may be
+    able to cancel"), is not a fixed duration, and no API operation performs it on any of the three surfaces.
+    Express orders are explicitly irreversible from the moment of payment. After carrier acceptance nothing
+    can be recalled. Graded documented (0.4), not verified: the window is a condition, not a stated period,
+    and the path is an email, not an operation. Nothing below asserts a window the provider has not written.
+  write_surfaces:
+  - operation: 'createMachineOrder / createMppMachineOrder (paid retry) — and hosted-checkout drafts once paid'
+    action: Print and mail a document (money spent, physical side effect)
+    reversal: cancel + refund by emailing support@postalform.com before printing or carrier handoff; refund of the Stripe PaymentIntent for machine payments (USDC returned to the payer wallet)
+    reversal_operation: null
+    window: 'before printing or carrier handoff begins (stated as a condition; production "typically take[s] up to 2 business days after payment confirmation")'
+    stated_terms:
+    - {clause: 'Terms 5', verbatim: 'For non-Express orders, if you request cancellation before printing or carrier handoff begins, we may be able to cancel and refund, at our discretion.'}
+    - {clause: 'Terms 5', verbatim: 'Express orders enter production immediately after payment confirmation. Express orders cannot be changed, canceled, or refunded after payment, even if you contact us moments later, except where required by law or where we determine the issue was caused by an error in our printing, processing, or fulfillment of the order.'}
+    - {clause: 'Terms 5', verbatim: 'Once printing has started or the item has been handed to the mail carrier, the order is generally non-cancelable and non-refundable, except where required by law or where we determine the issue was caused by an error in our printing, processing, or fulfillment of the order.'}
+    - {clause: 'Terms 5', verbatim: 'If there is a fulfillment error caused by us (for example, we printed the wrong file), our remedy is, at our option, reprint/resend or refund the affected order.'}
+    - {clause: 'agents.md Refunds', verbatim: 'Stripe supports refunds for crypto pay-ins in live mode. If you need to reverse a machine payment, you can refund the Stripe PaymentIntent and have USDC sent back to the payer wallet.'}
+    - {clause: 'help/refunds FAQ', verbatim: 'Can PostalForm recall a letter after carrier acceptance? No. After carrier acceptance, the original order cannot be canceled through PostalForm.'}
+    grade: documented
+  - operation: 'createLetter / createPostcard (Projects, live mode)'
+    action: Create a live mail order funded from prepaid credits
+    reversal: same support-email path; the contract exposes canceled as a MailOrderStatus value and postalform.letter.canceled / postalform.postcard.canceled as webhook events, but no cancel operation
+    reversal_operation: null
+    window: 'before printing or carrier handoff begins (same Terms)'
+    grade: documented
+    note: 'Live orders "reserve and capture the quoted amount" from the credit ledger; the ledger (listCreditLedger) is where a refund would appear. Test-mode orders have no money to reverse.'
+  - operation: 'createMachineFlowerLetter / createMppMachineFlowerLetter'
+    action: Order a Florist One arrangement with a card note
+    reversal: none documented beyond the general Terms
+    window: null
+    grade: none
+    note: Flower delivery dates and substitutions (allow_substitutions) are set at order time; no florist cancellation window is published.
+  - operation: createMppShippingLabel
+    action: Purchase a carrier shipping label (signed PDF)
+    reversal: none documented
+    window: null
+    grade: none
+  - operation: 'unpaid drafts (any surface)'
+    action: Create an unpaid draft / 402-challenged order
+    reversal: 'na — nothing has been printed or charged; abandoned unpaid uploads are swept after a TTL (security page)'
+    grade: na
+  - operation: 'Projects configuration writes (webhook endpoints, key rotation, auto-refill, credit top-ups)'
+    action: Configuration and funding
+    reversal: 'disableWebhookEndpoint reverses createWebhookEndpoint; rotateApiKey / rotateWebhookEndpointSecret are forward-only; credit top-ups are prepaid balances (refund policy not stated)'
+    grade: documented
+pagination:
+  style: cursor (machine forms catalog only)
+  request_params: {q: 'optional search (slug/name)', limit: 'integer 1-200, default 50', cursor: 'opaque string'}
+  response_fields: {forms: array, next_cursor: 'string|null'}
+  applies_to: [listMachineForms, postalform.list_forms (MCP)]
+  projects_api: >-
+    No pagination parameters on any Projects list operation: listWebhookEndpoints, listWebhookEvents,
+    listCreditLedger, listApiKeys and listPaymentMethods return a single {data: [...]} body;
+    exportReturnReceipts takes created_after / created_before date filters and caps at 500 receipts or 25 MiB
+    (413 above that).
+filtering_and_sorting:
+  supported: partial
+  note: 'q on the forms catalog; created_after / created_before on the receipt export; version and disposition query params on the document.pdf reads.'
+field_expansion:
+  supported: false
+sparse_fieldsets:
+  supported: false
+metadata:
+  supported: true
+  surface: Projects only
+  mechanism: 'CreateLetterRequest.metadata — "Optional caller metadata stored on the order and surfaced in reads/webhook payloads" (additionalProperties true; no size limit stated)'
+  machine_api: 'No metadata field; bulk.campaign_name is the only free-text label.'
+request_id_tracing:
+  supported: true
+  header: x-request-id
+  description: 'Every live response carried an x-request-id UUID (observed on 200, 404 and 422). Not declared in either contract and not documented as a support handle. The provider-side identifiers an agent should keep are order_id (canonical) and its own request_id (aliased to the order).'
+versioning:
+  scheme: 'machine API unversioned paths + info.version 1.0.0; Projects /api/v1 + date info.version 2026-05-06 + pricing_version on quotes'
+  detail: lifecycle/postalform-com-lifecycle.yml
+  changelog: changelog/postalform-com-changelog.yml
+errors:
+  envelope: '{message, code, order_id?, errors[]{path, code, message, hint?, fix_examples?}} + an observed, undeclared help{} block — not RFC 9457'
+  media_type: application/json; application/problem+json on MPP 402 only
+  json_rpc: JSON-RPC 2.0 error objects on /mcp and /a2a
+  projects: no error schema declared (descriptions only on 400/404/410/413)
+  detail: errors/postalform-com-problem-types.yml
+rate_limit_signaling:
+  exhaustion_status: 429
+  exhaustion_code: rate_limited
+  headers: []
+  note: 'Documented on address searches and unpaid order creation; no numbers, no Retry-After, no RateLimit-* headers declared or observed.'
+  detail: rate-limits/postalform-com-rate-limits.yml
+payment:
+  protocols: [x402, mpp, hosted checkout (Stripe), Stripe shared payment token (ACP checkout_session), UCP checkout]
+  x402: {asset: USDC, network: 'Base eip155:8453 (Base Sepolia eip155:84532 for tests)', facilitator: 'https://api.cdp.coinbase.com/platform/v2/x402', headers: 'PAYMENT-REQUIRED -> PAYMENT-SIGNATURE -> PAYMENT-RESPONSE', settlement: '202 settled_pending_webhook until Stripe verifies the Base transaction; poll, do not pay again'}
+  mpp: {methods: [tempo, stripe_spt, card], headers: 'WWW-Authenticate: Payment (one per method) -> Authorization: Payment -> Payment-Receipt', settlement: '202 settled_pending_webhook until the Stripe webhook marks the PaymentIntent paid'}
+  flow: 'validate (free) -> create (402 with preview_url) -> owner approval -> pay one challenge -> retry the byte-identical body with the same request_id -> poll status until payment_status paid'
+  price_bounds: '$3.40 - $200.00 per document order (x-payment-info); flowers $1.00 - $250.00 (x402 manifest)'
+  never: 'raw card details — "PostalForm does not accept raw card details over this API"'
+address_model:
+  strategies: 'exactly one per party: Address (Loqate *_address_id + *_address_text) or Manual (*_address_manual {line1, line2?, city, state?, zip, countryCode?})'
+  countries: [US, CA, AT, BE, CH, DE, ES, FR, GB, IN, LU, NL]
+  default_country: US
+  projects_aliases: 'MailingAddress accepts line1|street1|address_line1|addressLine1, city|address_city, countryCode|country_code|country|address_country|addressCountry (additionalProperties true)'
+document_model:
+  sources: 'exactly one of pdf ({upload_token} preferred; {download_url, file_id}; data:application/pdf;base64 URL; allowlisted HTTPS URL), letter (string or {title, body, signature, format text|html|markdown|rtf, render}), form ({slug, fields, attachments} from the forms catalog), or bulk ({csv_content, content_mode text|html|pdf, template_text|template_html|campaign_name})'
+  preview: 'unpaid single-recipient creates may return preview_url — a signed short-lived PDF for owner review before payment'
+  postcards: 'mailpiece_type postcard + postcard_size 4x6|6x9|11x6; 2-page PDF on the published bleed templates; page 2 mailing side must not carry addresses'

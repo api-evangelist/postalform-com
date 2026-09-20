@@ -1,0 +1,125 @@
+generated: '2026-09-19'
+method: derived
+source: openapi/postalform-com-machine-payments-openapi.json
+also_derived_from: openapi/postalform-com-projects-openapi.json
+docs: https://postalform.com/developers
+summary: >-
+  Derived from the 16 component schemas of the Machine Payments API and the 28 of the Projects API. One
+  physical pipeline, two order stores. The MACHINE ORDER (order_id UUID, aliased by the client's request_id)
+  is created under a 402 challenge from exactly one document source (pdf | letter | form | bulk) and two
+  address parties, and is read back as MachineOrderStatus with payment, fulfillment, tracking and
+  electronic-return-receipt (err_*) fields; flower letters and shipping labels are sibling order types with
+  their own request/order/validation schemas. The PROJECTS ORDER (Letter — also used for postcards, with
+  object letter|postcard) belongs to a workspace, is created from a Quote (which is created from a Document),
+  carries a Mode (test|live), and emits MailOrderEvents on its timeline and WebhookEvents to the workspace's
+  WebhookEndpoints; live orders draw on a CreditBalance ledger. Neither contract links schemas by $ref beyond
+  status -> enum and payload -> Letter; entities are linked by id fields (order_id, request_id, quote_id,
+  document_id, endpoint_id, event_id), and there is no expansion parameter.
+id_style:
+  format: 'UUID v4 on the machine API (order_id, request_id, format uuid); opaque strings with documented prefixes on Projects'
+  prefixes:
+  - {entity: Document, example: 'doc_...', source: 'developer-mail-api curl example'}
+  - {entity: Quote, example: 'quote_...', source: 'developer-mail-api curl example'}
+  - {entity: WebhookEvent (payload id), example: 'evt_123', source: 'CustomerWebhookPayload.id example'}
+  - {entity: API key, example: 'pf_test_... / pf_live_...', source: 'developer-mail-api; ApiKey.prefix'}
+  - {entity: Stripe shared payment token, example: 'spt_...', source: 'complete_checkout tool'}
+  - {entity: Loqate address id, example: 'US|LP|Pz0_Qj4_bGJg|16074807|13_ENG', source: 'developers page; the country prefix carries the mailing country'}
+entities:
+- name: MachineOrder
+  surface: Machine Payments API
+  description: A print-and-mail order created through x402 or MPP. Canonical id order_id; the client's request_id aliases to it and is the idempotency key. Status endpoints accept either.
+  schemas: [MachineOrderRequest, MachineOrder, MachineOrderStatus, MachineOrderValidationResponse, X402PaymentRequiredResponse, MppPaymentRequiredResponse]
+  key_fields: [order_id, status, payment_status, is_paid, current_step, payment_intent_id, payment_channel, price_usd, currency, mailpiece_type, postcard_size, certified, certified_return_receipt, return_receipt_format, restricted_delivery, err_delivery, err_email, err_status, err_document_available, err_delivered_at, tracking_number, tracking_url, usps_tracking_url, machine_payment, x402, campaign_url, order_complete_url]
+  relationships:
+  - {belongs_to: Buyer, via: 'buyer_name + buyer_email (no buyer entity; buyer_email becomes the Stripe receipt_email)'}
+  - {has_one: DocumentSource, via: 'pdf | letter | form (exactly one)'}
+  - {has_one: SenderAddress, via: 'sender_address_type + sender_address_id/text | sender_address_manual'}
+  - {has_one: RecipientAddress, via: 'recipient_address_type + ... (absent for bulk)'}
+  - {has_one: BulkCampaign, via: 'bulk {campaign_name, csv_content, content_mode, template_*} -> campaign_url', note: 'replaces the single recipient'}
+  - {has_one: PaymentIntent (Stripe), via: payment_intent_id}
+  - {has_one: PdfPreview, via: 'preview_url (signed, short-lived; unpaid single-recipient only)'}
+  - {has_one: ElectronicReturnReceipt, via: 'err_* fields (Certified Mail with return receipt)'}
+- name: WorkflowForm
+  surface: Machine Payments API
+  description: A published single-mailpiece form workflow (slug, name, category, certified_mail required|optional|none, recipient_mode user|predefined|computed, attachments[], aliases[], create_paths {x402, mpp}); its schema (fields, groups, dependencies, attachments) drives the form document source.
+  schemas: [MachineWorkflowFormListResponse, MachineWorkflowFormSchema]
+  relationships:
+  - {has_many: MachineOrder, via: 'form.slug on MachineOrderRequest'}
+- name: FlowerLetterOrder
+  surface: Machine Payments API
+  description: A Florist One arrangement with a card note (product_code, zipcode, delivery_date, customer, recipient, note <= 200 chars, allow_substitutions), paid through x402 or MPP; statuses awaiting_payment -> settled_pending_submission -> paid.
+  schemas: [MachineFlowerLetterRequest, MachineFlowerLetterOrder, MachineFlowerLetterValidationResponse, FlowerLetterPaymentRequiredResponse]
+  relationships:
+  - {has_one: PriceBreakdown, via: 'price_breakdown {arrangement_price_cents, delivery_charge_cents, tax_total_cents, order_total_cents}'}
+- name: ShippingLabelOrder
+  surface: Machine Payments API (MPP only)
+  description: A purchased domestic parcel label (from, to, parcel {weight_oz, length_in, width_in, height_in}, carrier, service) returning a signed PDF (label_download_url, label_download_expires_at) and tracking_code.
+  schemas: [MachineShippingLabelRequest, MachineShippingLabelOrder, MachineShippingLabelValidationResponse]
+- name: Workspace
+  surface: Projects API
+  description: The tenant. Not a schema of its own — implied by workspaceId on WebhookEvent, by per-workspace test/live keys, credits, orders and webhook settings, and by POSTALFORM_WORKSPACE_ID in Stripe Projects provisioning.
+  relationships:
+  - {has_many: ApiKey, via: 'mode test|live (ApiKey.mode, prefix, status active|disabled|revoked)'}
+  - {has_many: Document, via: document_id}
+  - {has_many: Quote, via: quote_id}
+  - {has_many: Letter, via: order_id}
+  - {has_many: WebhookEndpoint, via: endpoint_id}
+  - {has_many: WebhookEvent, via: workspaceId}
+  - {has_one: CreditBalance, via: 'mode-keyed snapshots test/live + auto_refill policies'}
+  - {has_many: CreditLedgerEntry, via: listCreditLedger}
+  - {has_many: BillingPaymentMethod, via: listPaymentMethods}
+- name: Document
+  surface: Projects API
+  description: An uploaded PDF, created by an UploadIntent (upload_url, PUT, expires_at) and completed by completeDocumentUpload; <= 25 MiB.
+  schemas: [UploadIntent]
+  relationships:
+  - {has_many: Quote, via: 'CreateQuoteRequest.document_id'}
+- name: Quote
+  surface: Projects API
+  description: A priced, expiring offer for one mailpiece (price_cents, currency usd, pricing_version, expires_at, mailpiece_type, postcard_size, proof-mail options).
+  schemas: [Quote, CreateQuoteRequest, CreatePostcardQuoteRequest]
+  relationships:
+  - {belongs_to: Document, via: document_id}
+  - {has_one: Letter, via: 'CreateLetterRequest.quote_id (+ Idempotency-Key)'}
+- name: Letter
+  surface: Projects API
+  description: A mail order (object letter|postcard) with MailOrderStatus timeline, Mode, price_cents, funds_status, billing_rail, tracking fields, err_* return-receipt fields, err_retention_until, and caller metadata.
+  schemas: [Letter, CreateLetterRequest, MailOrderStatus, MailingAddress, MailOrderEvent]
+  status_enum: [queued, document_preparing, document_prepared, submitted, accepted, in_transit, delivered, returned, submission_pending, failed, canceled]
+  relationships:
+  - {belongs_to: Quote, via: quote_id}
+  - {has_one: RecipientAddress, via: 'recipient (MailingAddress)'}
+  - {has_one: SenderAddress, via: 'sender (MailingAddress, recommended)'}
+  - {has_many: MailOrderEvent, via: 'timeline (event_type, status_before, status_after, source, created_at)'}
+  - {has_many: WebhookEvent, via: orderId}
+  - {has_one: ReturnReceiptPdf, via: 'getLetterReturnReceipt (404 not acquired, 410 past err_retention_until)'}
+  - {has_one: DocumentPdf, via: 'getLetterDocument (version, disposition)'}
+- name: WebhookEndpoint
+  surface: Projects API
+  description: A customer HTTPS URL with an endpoint-scoped signing_secret (returned once; rotatable) and status.
+  schemas: [WebhookEndpoint, WebhookEndpointSecretResponse]
+  relationships:
+  - {has_many: WebhookDeliveryAttempt, via: endpointId}
+- name: WebhookEvent
+  surface: Projects API
+  description: A fulfillment event (CustomerWebhookEventType) with its CustomerWebhookPayload and delivery attempts.
+  schemas: [WebhookEvent, CustomerWebhookEventType, CustomerWebhookPayload, WebhookDeliveryAttempt]
+  relationships:
+  - {belongs_to: Letter, via: orderId}
+  - {belongs_to: Workspace, via: workspaceId}
+  - {has_many: WebhookDeliveryAttempt, via: 'deliveries[] (attemptNumber, status, httpStatus, nextRetryAt)'}
+  - {embeds: Letter, via: 'payload.data.object'}
+- name: CreditBalance
+  surface: Projects API
+  description: Prepaid funds per mode (available_cents, reserved_cents, billing_rail mock_test_credits | prepaid_credits | future_* | manual_invoice) with auto-refill policies and a ledger.
+  schemas: [CreditBalance, CreditBalanceSnapshot, CreditAutoRefillPolicies, CreditAutoRefillPolicy, CreditAutoRefillRequest, CreditLedgerEntry, CreditCheckoutSession, BillingPaymentMethod, PaymentMethodSetupSession]
+  relationships:
+  - {has_many: CreditLedgerEntry}
+  - {has_many: BillingPaymentMethod, via: 'live auto-refill'}
+cross_surface_note: >-
+  A MachineOrder and a Projects Letter never share an id space: the MCP tool postalform.get_order_status reads
+  machine and hosted-checkout orders, the Projects getLetter reads workspace orders. Both converge on the
+  same physical fulfillment states (queued -> printing -> carrier handoff -> in transit -> delivered /
+  returned) and the same proof-mail model (certified, return_receipt_format electronic|physical,
+  restricted_delivery, err_delivery manual|email).
+render: none (no subway/ diagram in this repo)

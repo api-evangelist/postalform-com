@@ -1,18 +1,175 @@
 aid: postalform-com
 name: PostalForm
-description: 'PostalForm is a company surfaced via the API Evangelist harvest backlog (source: a2a-registry)
-  and added to the network as a stub for full-pipeline profiling.'
+description: >-
+  PostalForm is an online print-and-mail service operated by MindBike Technologies LLC that turns PDFs,
+  letters, filled government and consumer forms, dispute packets, postcards and CSV bulk campaigns into real
+  postal mail for twelve countries, with address validation, Certified Mail and electronic return
+  receipts. It is built agent-first: a remote MCP server at
+  https://postalform.com/mcp (12 tools, no credential to connect) creates reviewable hosted-checkout drafts;
+  a 17-operation Machine Payments API lets autonomous runtimes validate, pay for and track orders through
+  x402 (USDC on Base) or Stripe's Machine Payments Protocol under an HTTP 402 challenge; an A2A 1.0 agent
+  card, UCP and ACP checkout endpoints, an RFC 9727 api-catalog, an APIs.json index and an x402 manifest are
+  served from /.well-known/. PostalForm Projects (25 operations) adds API-key workspaces with a free test
+  mode, final-price quotes, Idempotency-Key orders, prepaid credits and signed webhooks.
 url: https://raw.githubusercontent.com/api-evangelist/postalform-com/refs/heads/main/apis.yml
+image: https://postalform.com/og/default.png
 x-type: company
 x-source: harvest:a2a-registry
-x-tier: stub
-x-tier-reason: harvest
+x-tier: profiled
+x-tier-reason: enrichment pass 2026-09-19 (local-v3; was a2a-registry harvest stub)
 specificationVersion: '0.20'
 created: '2026-09-19'
 modified: '2026-09-19'
 tags:
-- Company
-apis: []
+- Physical Mail
+- Print and Mail
+- Postal Mail
+- Certified Mail
+- Documents
+- Agents
+- Agent Commerce
+- MCP
+- A2A
+- x402
+- Machine Payments
+- Webhooks
+- agent-native
+- United States
+tags_raw:
+- Physical mail
+- Print and mail
+- Postal mail
+- Certified Mail
+- Documents
+- Agents
+- Agent commerce
+- MCP
+- A2A
+- x402
+- Machine payments
+- Webhooks
+- Agent-native
+- United States
+apis:
+- aid: postalform-com:postalform-machine-payments-api
+  name: PostalForm Machine Payments API
+  description: >-
+    Machine-oriented print-and-mail REST API for autonomous agents: validate and quote, then create, pay for
+    and poll document mail orders (PDF, server-rendered letter in text/html/markdown/rtf, workflow form, or
+    CSV bulk campaign), flower letters and MPP-only shipping labels. No API key — every paid create answers
+    HTTP 402 with an x402 PAYMENT-REQUIRED header (USDC on Base, Coinbase CDP facilitator) or MPP
+    WWW-Authenticate: Payment challenges (Tempo, Stripe shared payment token, card), and the retry reuses the
+    same request_id, which the contract treats as a strict idempotency key. 17 operations across 17 paths,
+    OpenAPI 3.1.0 with x-payment-info and x-agent-guidance extensions, served at https://postalform.com/openapi.json.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Physical Mail
+  - x402
+  - Machine Payments
+  - Agents
+  - Agent Commerce
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-machine-payments-openapi.json
+  - type: OpenAPI
+    name: PostalForm Machine Payments API OpenAPI (provider-hosted)
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    name: Agents guide (x402 / MPP machine payments)
+    url: https://postalform.com/agents
+  - type: Overlay
+    url: overlays/postalform-com-machine-payments-overlay.yaml
+- aid: postalform-com:postalform-projects-public-api
+  name: PostalForm Projects Public API
+  description: >-
+    Developer mail infrastructure for server-side applications: per-workspace bearer API keys with a free
+    simulated test mode (pf_test_) and a live mode on prepaid credits (pf_live_), two-step PDF upload,
+    final-price quotes with a pricing_version, Idempotency-Key letter and postcard orders, order timelines
+    with carrier tracking and electronic return receipts, signed fulfillment webhooks (PostalForm-Signature)
+    with retries and replay, credit balance, ledger, top-up and auto-refill, and key rotation. 25 operations
+    under /api/v1, OpenAPI 3.1.0 (info.version 2026-05-06) served at https://projects.postalform.com/openapi.json.
+    Also provisionable as postalform/mail through Stripe Projects.
+  humanURL: https://projects.postalform.com/docs
+  baseURL: https://projects.postalform.com/api/v1
+  tags:
+  - Physical Mail
+  - Print and Mail
+  - Webhooks
+  - Documents
+  - Certified Mail
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-projects-openapi.json
+  - type: OpenAPI
+    name: PostalForm Projects Public API OpenAPI (provider-hosted)
+    url: https://projects.postalform.com/openapi.json
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
+  - type: Overlay
+    url: overlays/postalform-com-projects-overlay.yaml
+- aid: postalform-com:postalform-mcp-server
+  name: PostalForm MCP Server
+  description: >-
+    Remote Model Context Protocol server at https://postalform.com/mcp (Streamable HTTP, wire protocol
+    2025-06-18, serverInfo postalform 0.1.0). initialize, tools/list and resources/list answer anonymously
+    with 12 tools carrying real inputSchema, outputSchema and annotations: list_forms, get_form_schema,
+    search_addresses, create_pdf_upload, create_order_draft, preview_letter_order_draft,
+    create_letter_order_draft, create_form_order_draft, create_machine_order, complete_checkout,
+    get_order_status and ping. Draft tools return a hosted checkout_url and an ACP checkout_session so a
+    human approves before any mail is printed; create_machine_order answers MPP/x402 challenges for
+    authorized autonomous runtimes. Discoverable via /.well-known/mcp.json, mcp/server.json (MCP Registry
+    schema) and mcp/server-card.json; sibling UCP and ACP checkout MCP endpoints at /ucp/mcp and /acp/mcp.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/mcp
+  tags:
+  - MCP
+  - agent-native
+  - Agent Commerce
+  - Physical Mail
+  properties:
+  - type: MCPServer
+    url: mcp/postalform-com-mcp.yml
+  - type: MCPServer
+    name: PostalForm MCP endpoint (Streamable HTTP)
+    url: https://postalform.com/mcp
+  - type: ToolCrosswalk
+    url: mcp/postalform-com-tool-crosswalk.yml
+  - type: AgentSkill
+    name: PostalForm agent skill (provider-published skill.md)
+    url: https://postalform.com/skill.md
+- aid: postalform-com:postalform-a2a-agent
+  name: PostalForm A2A Agent
+  description: >-
+    Agent2Agent (A2A) surface: an agent card served from https://postalform.com/.well-known/agent-card.json
+    (protocolVersion 1.0, JSONRPC binding, version 0.1.0, a2a-version: 1.0 response header) advertising three
+    guidance skills — connect an agent to PostalForm MCP, plan a reviewable mail draft, plan an authorized
+    machine-paid order — with x402 and UCP discovery documents declared as capability extensions. The
+    declared JSON-RPC endpoint https://postalform.com/a2a returns the card on GET and answers tasks/get with
+    -32601 Method not found; the provider calls it a discovery bridge, and the executable surface is the MCP
+    server the card points at.
+  humanURL: https://postalform.com/agents
+  baseURL: https://postalform.com/a2a
+  tags:
+  - A2A
+  - agent-native
+  - Agents
+  properties:
+  - type: AgentCard
+    url: a2a/postalform-com-a2a.yml
+  - type: AgentCard
+    name: A2A Agent Card (provider-hosted)
+    url: https://postalform.com/.well-known/agent-card.json
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
@@ -21,3 +178,94 @@ maintainers:
 common:
 - type: Website
   url: https://postalform.com/
+- type: DeveloperPortal
+  url: https://projects.postalform.com/
+- type: Documentation
+  url: https://postalform.com/developers
+- type: APIReference
+  url: https://postalform.com/openapi.json
+- type: GettingStarted
+  url: https://postalform.com/developers/quickstart
+- type: Support
+  url: https://postalform.com/support
+- type: HelpCenter
+  url: https://postalform.com/help
+- type: Blog
+  url: https://blog.postalform.com/
+- type: BlogRSS
+  url: https://blog.postalform.com/rss.xml
+- type: GitHubOrganization
+  url: https://github.com/postalform
+- type: Pricing
+  url: https://postalform.com/pricing
+- type: Signup
+  url: https://projects.postalform.com/signup
+- type: TermsOfService
+  url: https://postalform.com/terms
+- type: PrivacyPolicy
+  url: https://postalform.com/privacy
+- type: AcceptableUsePolicy
+  url: https://postalform.com/acceptable-use
+- type: StatusPage
+  url: https://postalform.com/api/health
+- type: ChangeLog
+  url: changelog/postalform-com-changelog.yml
+- type: ChangeLog
+  name: Monthly product updates (blog)
+  url: https://blog.postalform.com/
+- type: APIsJson
+  url: https://postalform.com/apis.json
+- type: LLMsTxt
+  url: llms/postalform-com-llms.txt
+- type: LLMsTxt
+  name: llms.txt (provider-hosted)
+  url: https://postalform.com/llms.txt
+- type: AgentCard
+  url: a2a/postalform-com-a2a.yml
+- type: MCPServer
+  url: mcp/postalform-com-mcp.yml
+- type: ToolCrosswalk
+  url: mcp/postalform-com-tool-crosswalk.yml
+- type: WellKnown
+  url: well-known/postalform-com-well-known.yml
+- type: APICatalog
+  url: well-known/postalform-com-api-catalog.json
+- type: ContentSignal
+  url: well-known/postalform-com-robots.txt
+- type: AgentSkill
+  url: skills/_index.yml
+- type: Authentication
+  url: authentication/postalform-com-authentication.yml
+- type: Conventions
+  url: conventions/postalform-com-conventions.yml
+- type: Idempotency
+  url: conventions/postalform-com-conventions.yml
+- type: ErrorCatalog
+  url: errors/postalform-com-problem-types.yml
+- type: Lifecycle
+  url: lifecycle/postalform-com-lifecycle.yml
+- type: Sandbox
+  url: sandbox/postalform-com-sandbox.yml
+- type: Conformance
+  url: conformance/postalform-com-conformance.yml
+- type: DataModel
+  url: data-model/postalform-com-data-model.yml
+- type: Webhooks
+  url: asyncapi/postalform-com-projects-webhooks.yml
+- type: Plans
+  url: plans/postalform-com-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/postalform-com-rate-limits.yml
+- type: Packages
+  url: packages/postalform-com-packages.yml
+- type: AgenticAccess
+  url: agentic-access/postalform-com-agentic-access.yml
+- type: DomainSecurity
+  url: security/postalform-com-domain-security.yml
+- type: DataSubjectRequest
+  url: https://postalform.com/privacy
+x-enrichment:
+  date: '2026-09-19'
+  status: enriched
+  artifacts_added: 41
+  pass: local-v3

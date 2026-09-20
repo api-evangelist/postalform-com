@@ -1,0 +1,81 @@
+generated: '2026-09-19'
+method: searched
+source: https://postalform.com/developers
+derived_from:
+- openapi/postalform-com-machine-payments-openapi.json
+- openapi/postalform-com-projects-openapi.json
+docs:
+- https://postalform.com/terms
+- https://blog.postalform.com/rss.xml
+- https://postalform.com/api/health
+versioning:
+  scheme: >-
+    Two schemes. The Machine Payments API is unversioned in its paths (/api/machine/...) and carries
+    info.version 1.0.0; the Projects API uses a path version (/api/v1/...) and a DATE as info.version
+    (2026-05-06), with a pricing_version string returned on every quote so a price can be reproduced.
+  current_version:
+    machine_payments_api: 1.0.0 (openapi info.version)
+    projects_api: 2026-05-06 (openapi info.version); path prefix /api/v1
+    mcp_server: 0.1.0 (serverInfo.version; wire protocol 2025-06-18, manifests declare 2025-11-25)
+    a2a_card: 0.1.0 (card version; protocolVersion 1.0)
+    apis_json: modified 2026-05-31
+  policy_published: false
+  note: >-
+    No versioning or backward-compatibility policy page exists. Version signals are the OpenAPI info.version
+    values, the MCP/A2A manifest versions, the dated pricing_version on Projects quotes, and dated legal pages
+    (Terms updated 2026-07-10, Privacy 2026-06-18, Acceptable Use and Content Policy). The Projects
+    /llm-context.txt notes that "legacy /stripe-projects adapter routes are internal" and the /agentic base is
+    the one Stripe Projects calls — an internal migration, not a public deprecation.
+deprecation:
+  policy_published: false
+  sunset_header: false
+  deprecation_header: false
+  rfc8594: false
+  deprecated_operations: []
+  note: >-
+    Zero operations carry deprecated: true in either contract. No Sunset or Deprecation header is declared.
+    /changelog and /status return 404 on postalform.com and a JSON 404 on projects.postalform.com. No
+    Deprecation pointer is emitted.
+status_page:
+  url: https://postalform.com/api/health
+  kind: machine health endpoint (component checks), not a human incident page
+  provider_declared_as: StatusPage (in the provider's own https://postalform.com/apis.json common[]) and as the RFC 9727 api-catalog "status" relation for every anchor
+  probed:
+  - url: https://postalform.com/api/health
+    status: 503
+    fetched: '2026-09-19'
+    body_summary: '{"status":"degraded", checks: db ok, redis ok, queue NOT ok (458 delayed, 53 failed, "failed jobs present"), worker ok (5 queues), ghostscript ok 10.02.1}'
+  - {url: 'https://postalform.com/status', status: 404}
+  - {url: 'https://projects.postalform.com/status', status: 404}
+  note: >-
+    A real, provider-published, machine-readable health document with per-component checks, queue depth and
+    worker freshness — more than most status pages disclose — but no incident history, uptime figure or
+    subscription. It answered 503 "degraded" at probe time because the job queue held failed jobs, which is
+    the endpoint doing its job; a liveness grader that reads only the status code will mark it dead. The
+    StatusPage pointer is emitted because the provider itself publishes it as such.
+sla:
+  published: false
+  uptime_target: null
+  note: >-
+    No uptime SLA. The Terms (section 4) commit to production timing instead: "Printing, mail preparation,
+    and carrier handoff typically take up to 2 business days after payment confirmation", delivery times are
+    estimates only, and no delivery date is guaranteed. Support response times are not stated.
+changelog:
+  published: true
+  kind: monthly "Product update" posts on the blog (no /changelog page)
+  url: https://blog.postalform.com/
+  rss: https://blog.postalform.com/rss.xml
+  detail: changelog/postalform-com-changelog.yml
+  dated_signals:
+  - {date: '2026-08-31', what: 'August 2026 product update — Spain added (12 countries), fuller Certified Mail return-receipt options, four consumer packets, live Projects fulfillment'}
+  - {date: '2026-07-31', what: 'July 2026 product update — browser PDF editor, DS-82 kit, more packets, Canada Registered Mail, redesigned Projects'}
+  - {date: '2026-06-10', what: 'PostalForm brings real mailing infrastructure to Stripe Projects'}
+  - {date: '2026-05-29', what: 'Multi-format mail, agent discovery, and previewable machine orders'}
+  - {date: '2026-03-18', what: 'PostalForm supports Stripe Machine Payments Protocol for agent-paid mail'}
+  - {date: '2026-02-15', what: 'Agents can create reviewable mail drafts (MCP launch)'}
+retention_and_expiry:
+  - {what: 'Electronic return receipts (Projects)', stated: 'retained for three years by default in Projects', source: 'https://blog.postalform.com/posts/postalform-product-update-august-2026/; Letter.err_retention_until; getLetterReturnReceipt 410 "passed its retention deadline"'}
+  - {what: 'Uploaded documents', stated: 'abandoned unpaid uploads swept after a configured TTL; paid-order files governed by operational retention settings and legal-hold safeguards', source: 'https://postalform.com/security'}
+  - {what: 'Projects quotes', stated: 'Quote.expires_at (date-time) — re-quote after expiry', source: openapi/postalform-com-projects-openapi.json}
+  - {what: 'Machine-order preview_url', stated: 'signed short-lived URL', source: openapi/postalform-com-machine-payments-openapi.json}
+  - {what: 'Shipping-label download', stated: 'label_download_expires_at', source: openapi/postalform-com-machine-payments-openapi.json}

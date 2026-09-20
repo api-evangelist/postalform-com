@@ -1,0 +1,59 @@
+generated: '2026-09-19'
+method: searched
+probe: true
+source: https://postalform.com/privacy
+probed:
+- {url: 'https://postalform.com/privacy', status: 200, fetched: '2026-09-19'}
+- {url: 'https://postalform.com/terms', status: 200, fetched: '2026-09-19'}
+- {url: 'https://postalform.com/security', status: 200, fetched: '2026-09-19'}
+- {url: 'https://postalform.com/content-policy', status: 200, fetched: '2026-09-19'}
+- {url: 'https://postalform.com/acceptable-use', status: 200, fetched: '2026-09-19'}
+- {url: 'https://postalform.com/ai', status: 200, fetched: '2026-09-19', note: 'AI-assistant instruction page (facts and phrasing for LLMs), not an AI-use disclosure about the product'}
+- {url: 'https://postalform.com/accessibility', status: 404}
+- {url: 'https://postalform.com/legal/subprocessors', status: 404}
+- {url: 'https://postalform.com/legal/dpa', status: 404}
+- {url: 'https://postalform.com/transparency', status: 404}
+- {url: 'https://postalform.com/.well-known/security.txt', status: 404}
+- {url: 'https://postalform.com/security/sbom', status: 404, note: 'not probed separately; /security page carries no SBOM reference'}
+summary: >-
+  PostalForm publishes a short privacy policy, terms, an acceptable-use policy and a content policy, and a
+  security overview. Of the fourteen horizontal signals only one meets the substance bar: a data-subject
+  request statement (access, correction, deletion by email). The privacy policy names vendor CATEGORIES
+  (payment provider "for example, Stripe", print providers, mail carriers, hosting/analytics/support tools)
+  but no dated subprocessor table, so subprocessors is not recorded; the security page describes retention
+  and access practices but no SBOM, certification or incident-notification commitment; the terms state an
+  18+ eligibility rule but no age-assurance mechanism; no accessibility conformance report, data-residency
+  statement, transparency report, GPC statement or exit/portability commitment was found. The developer docs
+  do name the fulfillment partners the routing uses (Click2Mail, PinGen, Lob, PostGrid, Florist One, Loqate,
+  Stripe) — useful for a buyer, but as product routing documentation rather than a GDPR Art. 28 list.
+signals:
+  data_subject_request:
+    url: https://postalform.com/privacy
+    section: '6. Your Choices'
+    channel: support@postalform.com
+    rights_named: [access, correction, deletion]
+    stated_sla: null
+    evidence:
+    - source: https://postalform.com/privacy
+      http_status: 200
+      fetched: '2026-09-19'
+      quote: 'You can contact us to request access, correction, or deletion of certain information, subject to legal limits. ... Questions? Contact us at support@postalform.com.'
+    note: >-
+      A published request channel and three named rights, with the qualifier "certain information, subject to
+      legal limits" and no response period. It is a clause in the privacy policy, not a dedicated intake page
+      or form, and no API endpoint exists for it. The same policy states "We do not sell your personal
+      information."
+not_recorded:
+  subprocessors: 'Privacy policy section 3 lists categories (payment provider e.g. Stripe; print providers and mail carriers; hosting, analytics, support vendors) without a dated vendor table — below the substance bar.'
+  incident_notification: 'No breach-notification commitment or SLA on /privacy, /terms or /security.'
+  age_assurance: 'Terms section 2: "You must be at least 18 years old" — an eligibility rule, not an assurance mechanism.'
+  ai_transparency: '/ai is guidance FOR AI assistants about PostalForm; the product''s own use of AI (e.g. the "support-triage" and "document-moderation" worker queues visible in /api/health) is not disclosed to users anywhere found.'
+  global_privacy_control: 'No GPC statement; not tested by header, per the rule.'
+  accessibility_conformance: '/accessibility 404; no VPAT or WCAG statement found.'
+  data_residency: 'None. Hosting is behind Cloudflare; the Projects API runs on Cloudflare Workers per the upload-intent description ("inside the Worker memory budget"); no region statement.'
+  sbom: 'None published; never derived.'
+  support_lifetime: 'None.'
+  training_data_summary: 'None.'
+  notice_and_action: '/content-policy states PostalForm "may review, refuse, hold, or cancel orders" and may report suspected illegal activity — an enforcement statement, not a notice-and-action channel for third parties.'
+  transparency_report: 'None.'
+  exit_assistance: 'None beyond deletion on request; no export or portability commitment.'
