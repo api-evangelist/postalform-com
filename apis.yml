@@ -22,17 +22,17 @@ created: '2026-09-19'
 modified: '2026-09-19'
 tags:
 - Physical Mail
-- Print and Mail
+- Print & Mail
 - Postal Mail
 - Certified Mail
 - Documents
 - Agents
-- Agent Commerce
+- Agentic Commerce
 - MCP
 - A2A
 - x402
 - Machine Payments
-- Webhooks
+- Webhook
 - agent-native
 - United States
 tags_raw:
@@ -50,6 +50,8 @@ tags_raw:
 - Webhooks
 - Agent-native
 - United States
+- Print and Mail
+- Agent Commerce
 apis:
 - aid: postalform-com:postalform-machine-payments-api
   name: PostalForm Machine Payments API
@@ -64,6 +66,12 @@ apis:
   humanURL: https://postalform.com/developers
   baseURL: https://postalform.com/api/machine
   tags:
+  - Physical Mail
+  - x402
+  - Machine Payments
+  - Agents
+  - Agentic Commerce
+  tags_raw:
   - Physical Mail
   - x402
   - Machine Payments
@@ -97,6 +105,12 @@ apis:
   humanURL: https://projects.postalform.com/docs
   baseURL: https://projects.postalform.com/api/v1
   tags:
+  - Physical Mail
+  - Print & Mail
+  - Webhook
+  - Documents
+  - Certified Mail
+  tags_raw:
   - Physical Mail
   - Print and Mail
   - Webhooks
@@ -133,6 +147,11 @@ apis:
   humanURL: https://postalform.com/developers
   baseURL: https://postalform.com/mcp
   tags:
+  - MCP
+  - agent-native
+  - Agentic Commerce
+  - Physical Mail
+  tags_raw:
   - MCP
   - agent-native
   - Agent Commerce
