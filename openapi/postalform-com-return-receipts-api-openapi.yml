@@ -1,0 +1,51 @@
+openapi: 3.2.0
+info:
+  title: PostalForm Projects Public Return Receipts API
+  version: '2026-05-06'
+  description: Public PostalForm Projects API for customer SDKs. Includes document uploads, quotes, mail orders, credits, API keys, and signed customer webhooks.
+servers:
+- url: https://projects.postalform.com
+tags:
+- name: Return Receipts
+paths:
+  /api/v1/return-receipts/export.zip:
+    get:
+      summary: Export stored electronic return receipts in bulk
+      description: Downloads up to 500 available receipt PDFs plus a CSV manifest in one ZIP archive. Use the optional date range to partition larger exports.
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: created_after
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: Include orders created at or after this ISO 8601 date-time.
+      - name: created_before
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: Include orders created before this ISO 8601 date-time.
+      responses:
+        '200':
+          description: ZIP archive containing manifest.csv and the available receipt PDFs.
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid date range.
+        '413':
+          description: Export exceeds the 500-receipt or 25 MiB limit; narrow the date range.
+      operationId: exportReturnReceipts
+      tags:
+      - Return Receipts
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

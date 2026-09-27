@@ -1,0 +1,110 @@
+openapi: 3.2.0
+info:
+  title: PostalForm Projects Public Documents API
+  version: '2026-05-06'
+  description: Public PostalForm Projects API for customer SDKs. Includes document uploads, quotes, mail orders, credits, API keys, and signed customer webhooks.
+servers:
+- url: https://projects.postalform.com
+tags:
+- name: Documents
+paths:
+  /api/v1/documents/upload-intent:
+    post:
+      summary: Create a PDF upload intent
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content_type:
+                  type: string
+                  const: application/pdf
+                byte_size:
+                  type: integer
+                  minimum: 1
+                  maximum: 26214400
+                  description: PDF size in bytes. Projects currently limits uploads to 25 MiB while preparation runs inside the Worker memory budget.
+                page_count:
+                  type: integer
+                  minimum: 1
+                  description: Optional known PDF page count. Used for quote validation and pricing if supplied.
+              required:
+              - content_type
+              - byte_size
+      responses:
+        '200':
+          description: Upload instructions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadIntent'
+      operationId: createUploadIntent
+      tags:
+      - Documents
+  /api/v1/documents/{document_id}/complete:
+    post:
+      summary: Mark an uploaded document complete after the object is present
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/DocumentId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page_count:
+                  type: integer
+                  minimum: 1
+                  description: Optional PDF page count if it was not supplied during upload-intent creation.
+      responses:
+        '200':
+          description: Validated document.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                    - validated
+      operationId: completeDocumentUpload
+      tags:
+      - Documents
+components:
+  parameters:
+    DocumentId:
+      name: document_id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    UploadIntent:
+      type: object
+      properties:
+        document_id:
+          type: string
+        upload_url:
+          type: string
+          format: uri
+        upload_method:
+          type: string
+          enum:
+          - PUT
+        expires_at:
+          type: string
+          format: date-time
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

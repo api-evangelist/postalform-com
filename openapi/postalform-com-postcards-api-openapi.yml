@@ -1,0 +1,521 @@
+openapi: 3.2.0
+info:
+  title: PostalForm Projects Public Postcards API
+  version: '2026-05-06'
+  description: Public PostalForm Projects API for customer SDKs. Includes document uploads, quotes, mail orders, credits, API keys, and signed customer webhooks.
+servers:
+- url: https://projects.postalform.com
+tags:
+- name: Postcards
+paths:
+  /api/v1/postcards/quotes:
+    post:
+      summary: Quote a postcard mailpiece
+      description: Postcards require a fully composed two-page PDF and a postcard_size of 4x6, 6x9, or 11x6. Postcards are first-class, color, double-sided mailpieces and do not support certified or registered mail.
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostcardQuoteRequest'
+      responses:
+        '200':
+          description: Postcard quote.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quote'
+      operationId: createPostcardQuote
+      tags:
+      - Postcards
+  /api/v1/postcards:
+    post:
+      summary: Create a test or live postcard order from a postcard quote
+      security:
+      - bearerAuth: []
+      parameters:
+      - name: Idempotency-Key
+        in: header
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLetterRequest'
+      responses:
+        '200':
+          description: Idempotent replay.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Letter'
+        '201':
+          description: Created postcard order.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Letter'
+      operationId: createPostcard
+      tags:
+      - Postcards
+  /api/v1/postcards/{order_id}:
+    get:
+      summary: Retrieve a postcard order, timeline, tracking fields, and customer webhook…
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Postcard order detail.
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Letter'
+                - type: object
+                  properties:
+                    timeline:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/MailOrderEvent'
+                    webhook_events:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/WebhookEvent'
+      operationId: getPostcard
+      tags:
+      - Postcards
+  /api/v1/postcards/{order_id}/document.pdf:
+    get:
+      summary: Preview or download the PDF for a postcard order
+      description: Streams the prepared postcard PDF when available, otherwise the original uploaded PDF while preparation is pending. Documents follow the workspace document retention window.
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/OrderId'
+      - name: version
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - current
+          - original
+          - prepared
+          default: current
+        description: current returns the prepared PDF when available and otherwise the original upload.
+      - name: disposition
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - inline
+          - attachment
+          default: inline
+        description: Use attachment to download instead of previewing inline.
+      responses:
+        '200':
+          description: PDF bytes.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+      operationId: getPostcardDocument
+      tags:
+      - Postcards
+components:
+  schemas:
+    CustomerWebhookEventType:
+      type: string
+      description: Customer webhook event names emitted for fulfillment status changes. Replace `letter` with `postcard` for postcard mailpieces.
+      enum:
+      - postalform.letter.accepted
+      - postalform.letter.in_transit
+      - postalform.letter.delivered
+      - postalform.letter.returned
+      - postalform.letter.failed
+      - postalform.letter.canceled
+      - postalform.postcard.accepted
+      - postalform.postcard.in_transit
+      - postalform.postcard.delivered
+      - postalform.postcard.returned
+      - postalform.postcard.failed
+      - postalform.postcard.canceled
+      x-enumDescriptions:
+        postalform.letter.accepted: Letter accepted for production or mailing after the order leaves PostalForm's preparation queue.
+        postalform.letter.in_transit: Letter entered the mail stream. The payload may include or update `mailpiece.tracking_number` when tracking is available.
+        postalform.letter.delivered: Letter reported delivered by the carrier or delivery network.
+        postalform.letter.returned: Letter returned or otherwise marked undeliverable.
+        postalform.letter.failed: Letter could not be produced or mailed. Inspect the order timeline and retry with a corrected request when appropriate.
+        postalform.letter.canceled: Letter canceled before delivery completion.
+        postalform.postcard.accepted: Postcard accepted for production or mailing after the order leaves PostalForm's preparation queue.
+        postalform.postcard.in_transit: Postcard entered the mail stream. The payload may include or update `mailpiece.tracking_number` when tracking is available.
+        postalform.postcard.delivered: Postcard reported delivered by the carrier or delivery network.
+        postalform.postcard.returned: Postcard returned or otherwise marked undeliverable.
+        postalform.postcard.failed: Postcard could not be produced or mailed. Inspect the order timeline and retry with a corrected request when appropriate.
+        postalform.postcard.canceled: Postcard canceled before delivery completion.
+    MailingAddress:
+      type: object
+      description: Flexible mailing address object. Pass countryCode, country_code, country, address_country, or addressCountry for international destinations; country defaults to US when omitted.
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        line1:
+          type: string
+          description: Also accepts street1, address_line1, or addressLine1.
+        line2:
+          type: string
+          description: Also accepts street2, address_line2, or addressLine2.
+        city:
+          type: string
+          description: Also accepts address_city or addressCity.
+        state:
+          type: string
+          description: Also accepts province, provinceOrState, address_state, or addressState.
+        postal_code:
+          type: string
+          description: Also accepts postalCode, postalOrZip, zip, address_zip, or addressZip.
+        countryCode:
+          type: string
+          minLength: 2
+          maxLength: 2
+          default: US
+          description: ISO 3166-1 alpha-2 country code. Defaults to US when omitted.
+    CreateLetterRequest:
+      type: object
+      description: Create an order from a quote. Requires Idempotency-Key header. Sender is strongly recommended for all live mail and required for some destinations and mailpiece options.
+      properties:
+        quote_id:
+          type: string
+        recipient:
+          $ref: '#/components/schemas/MailingAddress'
+        sender:
+          $ref: '#/components/schemas/MailingAddress'
+        metadata:
+          type: object
+          description: Optional caller metadata stored on the order and surfaced in reads/webhook payloads.
+          additionalProperties: true
+      required:
+      - quote_id
+      - recipient
+    CreatePostcardQuoteRequest:
+      type: object
+      description: Postcard quote request. Postcards force first-class color double-sided mail and cannot use certified or registered mail.
+      properties:
+        document_id:
+          type: string
+        page_count:
+          type: integer
+          minimum: 1
+          description: Optional explicit PDF page count. Postcard source PDFs should be fully composed.
+        postcard_size:
+          type: string
+          enum:
+          - 4x6
+          - 6x9
+          - 11x6
+        destination_country_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+          default: US
+          description: ISO 3166-1 alpha-2 destination country code used for quote validation and pricing. Defaults to US.
+        origin_country_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+          default: US
+          description: ISO 3166-1 alpha-2 sender/origin country code used for quote validation and pricing. Defaults to US.
+      required:
+      - document_id
+      - postcard_size
+    MailOrderEvent:
+      type: object
+      description: Customer-facing order timeline event. Internal fulfillment identifiers are not exposed.
+      properties:
+        id:
+          type: string
+        event_type:
+          type: string
+        status_before:
+          type: string
+        status_after:
+          type: string
+        source:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    WebhookDeliveryAttempt:
+      type: object
+      properties:
+        id:
+          type: string
+        webhookEventId:
+          type: string
+        endpointId:
+          type: string
+        attemptNumber:
+          type: integer
+        status:
+          type: string
+          enum:
+          - succeeded
+          - failed
+        httpStatus:
+          type: integer
+        responseBodySnippet:
+          type: string
+        attemptedAt:
+          type: string
+          format: date-time
+        nextRetryAt:
+          type: string
+          format: date-time
+    Letter:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          enum:
+          - letter
+          - postcard
+        mailpiece_type:
+          type: string
+          enum:
+          - letter
+          - postcard
+        postcard_size:
+          type:
+          - string
+          - 'null'
+          enum:
+          - 4x6
+          - 6x9
+          - 11x6
+          - null
+        status:
+          $ref: '#/components/schemas/MailOrderStatus'
+        mode:
+          $ref: '#/components/schemas/Mode'
+        price_cents:
+          type: integer
+        currency:
+          type: string
+        funds_status:
+          type: string
+        billing_rail:
+          type: string
+        tracking_number:
+          type: string
+          nullable: true
+          description: Carrier tracking number when available.
+        tracking_url:
+          type:
+          - string
+          - 'null'
+          format: uri
+          description: Direct USPS tracking URL when a tracking number is available. Manual ERR customers can use it to request their receipt from USPS.
+        tracking_status:
+          type: string
+          nullable: true
+          description: Normalized tracking status when available.
+        return_receipt_format:
+          type: string
+          enum:
+          - electronic
+          - physical
+        restricted_delivery:
+          type: boolean
+        err_delivery:
+          type: string
+          enum:
+          - manual
+          - email
+        err_email:
+          type:
+          - string
+          - 'null'
+          format: email
+        err_status:
+          type: string
+          enum:
+          - manual
+          - pending
+          - sent
+          - failed
+          - expired
+        err_delivered_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        err_retention_until:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Last instant at which an acquired receipt remains retrievable. PostalForm's default ERR retention is three years.
+        return_receipt_available:
+          type: boolean
+          description: Whether a stored electronic receipt can currently be downloaded.
+        return_receipt_url:
+          type:
+          - string
+          - 'null'
+          description: Relative authenticated download URL when return_receipt_available is true.
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        idempotent_replay:
+          type: boolean
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
+    WebhookEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        workspaceId:
+          type: string
+        orderId:
+          type: string
+        eventType:
+          $ref: '#/components/schemas/CustomerWebhookEventType'
+        payload:
+          $ref: '#/components/schemas/CustomerWebhookPayload'
+        createdAt:
+          type: string
+          format: date-time
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDeliveryAttempt'
+    Quote:
+      type: object
+      properties:
+        standalone_address_page:
+          type: boolean
+          description: Resolved standalone address page setting saved on this quote. Always false for postcards.
+        quote_id:
+          type: string
+        mailpiece_type:
+          type: string
+          enum:
+          - letter
+          - postcard
+        postcard_size:
+          type:
+          - string
+          - 'null'
+          enum:
+          - 4x6
+          - 6x9
+          - 11x6
+          - null
+        price_cents:
+          type: integer
+        currency:
+          type: string
+          enum:
+          - usd
+        pricing_version:
+          type: string
+        certified_return_receipt:
+          type: boolean
+        return_receipt_format:
+          type: string
+          enum:
+          - electronic
+          - physical
+        restricted_delivery:
+          type: boolean
+        err_delivery:
+          type: string
+          enum:
+          - manual
+          - email
+        err_email:
+          type:
+          - string
+          - 'null'
+          format: email
+        signature_required:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+    CustomerWebhookPayload:
+      type: object
+      description: JSON body POSTed to customer webhook endpoints.
+      properties:
+        id:
+          type: string
+          example: evt_123
+        type:
+          $ref: '#/components/schemas/CustomerWebhookEventType'
+        data:
+          type: object
+          properties:
+            object:
+              $ref: '#/components/schemas/Letter'
+        mailpiece:
+          type: object
+          properties:
+            status:
+              type: string
+              nullable: true
+            tracking_number:
+              type: string
+              nullable: true
+            tracking_status:
+              type: string
+              nullable: true
+    MailOrderStatus:
+      type: string
+      enum:
+      - queued
+      - document_preparing
+      - document_prepared
+      - submitted
+      - accepted
+      - in_transit
+      - delivered
+      - returned
+      - submission_pending
+      - failed
+      - canceled
+      description: Order timeline status. `submission_pending` means the fulfillment submit job entered a physical-mail safety window where PostalForm cannot blindly retry without risking duplicate mail; it requires reconciliation if it remains the current order status.
+  parameters:
+    OrderId:
+      name: order_id
+      in: path
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

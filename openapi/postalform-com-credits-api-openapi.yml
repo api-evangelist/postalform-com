@@ -1,0 +1,390 @@
+openapi: 3.2.0
+info:
+  title: PostalForm Projects Public Credits API
+  version: '2026-05-06'
+  description: Public PostalForm Projects API for customer SDKs. Includes document uploads, quotes, mail orders, credits, API keys, and signed customer webhooks.
+servers:
+- url: https://projects.postalform.com
+tags:
+- name: Credits
+paths:
+  /api/v1/credits/balance:
+    get:
+      summary: Get prepaid credit balance
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Balance.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditBalance'
+      operationId: getCreditBalance
+      tags:
+      - Credits
+  /api/v1/credits/payment-methods:
+    get:
+      summary: List saved live billing payment methods
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Saved payment methods for live auto-refill.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BillingPaymentMethod'
+      operationId: listPaymentMethods
+      tags:
+      - Credits
+  /api/v1/credits/payment-methods/setup-session:
+    post:
+      summary: Create a Checkout setup session for live credit auto-refill
+      description: Requires a live API key. The returned Checkout URL lets the customer save a payment method for future off-session auto-refill charges.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Checkout setup session URL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethodSetupSession'
+      operationId: createPaymentMethodSetupSession
+      tags:
+      - Credits
+  /api/v1/credits/auto-refill:
+    get:
+      summary: Get credit auto-refill threshold policies
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Auto-refill policies for test and live credit balances.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditAutoRefillPolicies'
+      operationId: getCreditAutoRefillPolicies
+      tags:
+      - Credits
+    post:
+      summary: Configure the credit auto-refill threshold for the authenticated key mode
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditAutoRefillRequest'
+      responses:
+        '200':
+          description: Updated auto-refill policy.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CreditAutoRefillPolicy'
+      operationId: configureCreditAutoRefill
+      tags:
+      - Credits
+  /api/v1/credits/ledger:
+    get:
+      summary: List prepaid credit ledger entries
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Ledger entries.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CreditLedgerEntry'
+      operationId: listCreditLedger
+      tags:
+      - Credits
+  /api/v1/credits/checkout-session:
+    post:
+      summary: Create a prepaid credit top-up checkout session
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount_cents:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Stripe Checkout URL in configured environments, or a local checkout stub URL for local development.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCheckoutSession'
+      operationId: createCreditCheckoutSession
+      tags:
+      - Credits
+components:
+  schemas:
+    BillingPaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        provider:
+          type: string
+          enum:
+          - stripe
+        type:
+          type: string
+        brand:
+          type: string
+        last4:
+          type: string
+        exp_month:
+          type: integer
+        exp_year:
+          type: integer
+        status:
+          type: string
+          enum:
+          - active
+          - disabled
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+    CreditBalanceSnapshot:
+      type: object
+      properties:
+        available_cents:
+          type: integer
+        reserved_cents:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+    CreditAutoRefillPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        workspace_id:
+          type: string
+        mode:
+          $ref: '#/components/schemas/Mode'
+        billing_rail:
+          type: string
+          enum:
+          - mock_test_credits
+          - prepaid_credits
+        enabled:
+          type: boolean
+        threshold_cents:
+          type: integer
+        refill_amount_cents:
+          type: integer
+        provider:
+          type: string
+          enum:
+          - test_grant
+          - stripe_checkout
+          - local_checkout_stub
+        status:
+          type: string
+          enum:
+          - active
+          - disabled
+          - payment_action_required
+          - payment_pending
+          - payment_failed
+        last_triggered_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreditCheckoutSession:
+      type: object
+      properties:
+        id:
+          type: string
+          description: PostalForm top-up ID.
+        mode:
+          type: string
+          enum:
+          - stripe_checkout
+          - local_checkout_stub
+        checkout_url:
+          type: string
+          format: uri
+        amount_cents:
+          type: integer
+        currency:
+          type: string
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
+    PaymentMethodSetupSession:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+          - stripe_checkout
+          - local_checkout_stub
+        checkout_url:
+          type: string
+          format: uri
+    CreditBalance:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+          - test
+          - live
+        billing_rail:
+          type: string
+          enum:
+          - mock_test_credits
+          - prepaid_credits
+          - future_projects_spt
+          - future_metronome_streaming
+          - future_mpp_tempo
+          - manual_invoice
+        available_cents:
+          type: integer
+        reserved_cents:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+        test:
+          $ref: '#/components/schemas/CreditBalanceSnapshot'
+        live:
+          $ref: '#/components/schemas/CreditBalanceSnapshot'
+        auto_refill:
+          $ref: '#/components/schemas/CreditAutoRefillPolicies'
+    CreditAutoRefillPolicies:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            test:
+              anyOf:
+              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+              - type: 'null'
+            live:
+              anyOf:
+              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+              - type: 'null'
+        test:
+          anyOf:
+          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+          - type: 'null'
+        live:
+          anyOf:
+          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+          - type: 'null'
+    CreditAutoRefillRequest:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/Mode'
+        enabled:
+          type: boolean
+          default: true
+        threshold_cents:
+          type: integer
+          minimum: 100
+          maximum: 100000
+        refill_amount_cents:
+          type: integer
+          minimum: 100
+          maximum: 100000
+      required:
+      - threshold_cents
+      - refill_amount_cents
+    CreditLedgerEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        workspace_id:
+          type: string
+        credit_account_id:
+          type: string
+        order_id:
+          type: string
+        mode:
+          type: string
+          enum:
+          - test
+          - live
+        billing_rail:
+          type: string
+          enum:
+          - mock_test_credits
+          - prepaid_credits
+          - future_projects_spt
+          - future_metronome_streaming
+          - future_mpp_tempo
+          - manual_invoice
+        type:
+          type: string
+          enum:
+          - test_grant
+          - topup
+          - reserve
+          - capture
+          - release
+          - refund
+          - adjustment
+        amount_cents:
+          type: integer
+        currency:
+          type: string
+        external_reference:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

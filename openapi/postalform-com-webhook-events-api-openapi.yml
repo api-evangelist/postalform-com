@@ -1,0 +1,283 @@
+openapi: 3.2.0
+info:
+  title: PostalForm Projects Public Webhook Events API
+  version: '2026-05-06'
+  description: Public PostalForm Projects API for customer SDKs. Includes document uploads, quotes, mail orders, credits, API keys, and signed customer webhooks.
+servers:
+- url: https://projects.postalform.com
+tags:
+- name: Webhook Events
+paths:
+  /api/v1/webhook-events:
+    get:
+      summary: List customer webhook events for the workspace
+      description: Customer webhook events are fulfillment status-change events only. Event names use `postalform.{letter|postcard}.{status}` and are emitted for `accepted`, `in_transit`, `delivered`, `returned`, `failed`, and `canceled`.
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Events.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookEvent'
+      operationId: listWebhookEvents
+      tags:
+      - Webhook Events
+  /api/v1/webhook-events/{event_id}/replay:
+    post:
+      summary: Queue a customer webhook event for replay
+      security:
+      - bearerAuth: []
+      parameters:
+      - $ref: '#/components/parameters/EventId'
+      responses:
+        '200':
+          description: Replay queued.
+      operationId: replayWebhookEvent
+      tags:
+      - Webhook Events
+components:
+  schemas:
+    CustomerWebhookEventType:
+      type: string
+      description: Customer webhook event names emitted for fulfillment status changes. Replace `letter` with `postcard` for postcard mailpieces.
+      enum:
+      - postalform.letter.accepted
+      - postalform.letter.in_transit
+      - postalform.letter.delivered
+      - postalform.letter.returned
+      - postalform.letter.failed
+      - postalform.letter.canceled
+      - postalform.postcard.accepted
+      - postalform.postcard.in_transit
+      - postalform.postcard.delivered
+      - postalform.postcard.returned
+      - postalform.postcard.failed
+      - postalform.postcard.canceled
+      x-enumDescriptions:
+        postalform.letter.accepted: Letter accepted for production or mailing after the order leaves PostalForm's preparation queue.
+        postalform.letter.in_transit: Letter entered the mail stream. The payload may include or update `mailpiece.tracking_number` when tracking is available.
+        postalform.letter.delivered: Letter reported delivered by the carrier or delivery network.
+        postalform.letter.returned: Letter returned or otherwise marked undeliverable.
+        postalform.letter.failed: Letter could not be produced or mailed. Inspect the order timeline and retry with a corrected request when appropriate.
+        postalform.letter.canceled: Letter canceled before delivery completion.
+        postalform.postcard.accepted: Postcard accepted for production or mailing after the order leaves PostalForm's preparation queue.
+        postalform.postcard.in_transit: Postcard entered the mail stream. The payload may include or update `mailpiece.tracking_number` when tracking is available.
+        postalform.postcard.delivered: Postcard reported delivered by the carrier or delivery network.
+        postalform.postcard.returned: Postcard returned or otherwise marked undeliverable.
+        postalform.postcard.failed: Postcard could not be produced or mailed. Inspect the order timeline and retry with a corrected request when appropriate.
+        postalform.postcard.canceled: Postcard canceled before delivery completion.
+    WebhookDeliveryAttempt:
+      type: object
+      properties:
+        id:
+          type: string
+        webhookEventId:
+          type: string
+        endpointId:
+          type: string
+        attemptNumber:
+          type: integer
+        status:
+          type: string
+          enum:
+          - succeeded
+          - failed
+        httpStatus:
+          type: integer
+        responseBodySnippet:
+          type: string
+        attemptedAt:
+          type: string
+          format: date-time
+        nextRetryAt:
+          type: string
+          format: date-time
+    Letter:
+      type: object
+      properties:
+        id:
+          type: string
+        object:
+          type: string
+          enum:
+          - letter
+          - postcard
+        mailpiece_type:
+          type: string
+          enum:
+          - letter
+          - postcard
+        postcard_size:
+          type:
+          - string
+          - 'null'
+          enum:
+          - 4x6
+          - 6x9
+          - 11x6
+          - null
+        status:
+          $ref: '#/components/schemas/MailOrderStatus'
+        mode:
+          $ref: '#/components/schemas/Mode'
+        price_cents:
+          type: integer
+        currency:
+          type: string
+        funds_status:
+          type: string
+        billing_rail:
+          type: string
+        tracking_number:
+          type: string
+          nullable: true
+          description: Carrier tracking number when available.
+        tracking_url:
+          type:
+          - string
+          - 'null'
+          format: uri
+          description: Direct USPS tracking URL when a tracking number is available. Manual ERR customers can use it to request their receipt from USPS.
+        tracking_status:
+          type: string
+          nullable: true
+          description: Normalized tracking status when available.
+        return_receipt_format:
+          type: string
+          enum:
+          - electronic
+          - physical
+        restricted_delivery:
+          type: boolean
+        err_delivery:
+          type: string
+          enum:
+          - manual
+          - email
+        err_email:
+          type:
+          - string
+          - 'null'
+          format: email
+        err_status:
+          type: string
+          enum:
+          - manual
+          - pending
+          - sent
+          - failed
+          - expired
+        err_delivered_at:
+          type:
+          - string
+          - 'null'
+          format: date-time
+        err_retention_until:
+          type:
+          - string
+          - 'null'
+          format: date-time
+          description: Last instant at which an acquired receipt remains retrievable. PostalForm's default ERR retention is three years.
+        return_receipt_available:
+          type: boolean
+          description: Whether a stored electronic receipt can currently be downloaded.
+        return_receipt_url:
+          type:
+          - string
+          - 'null'
+          description: Relative authenticated download URL when return_receipt_available is true.
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        idempotent_replay:
+          type: boolean
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
+    WebhookEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        workspaceId:
+          type: string
+        orderId:
+          type: string
+        eventType:
+          $ref: '#/components/schemas/CustomerWebhookEventType'
+        payload:
+          $ref: '#/components/schemas/CustomerWebhookPayload'
+        createdAt:
+          type: string
+          format: date-time
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDeliveryAttempt'
+    CustomerWebhookPayload:
+      type: object
+      description: JSON body POSTed to customer webhook endpoints.
+      properties:
+        id:
+          type: string
+          example: evt_123
+        type:
+          $ref: '#/components/schemas/CustomerWebhookEventType'
+        data:
+          type: object
+          properties:
+            object:
+              $ref: '#/components/schemas/Letter'
+        mailpiece:
+          type: object
+          properties:
+            status:
+              type: string
+              nullable: true
+            tracking_number:
+              type: string
+              nullable: true
+            tracking_status:
+              type: string
+              nullable: true
+    MailOrderStatus:
+      type: string
+      enum:
+      - queued
+      - document_preparing
+      - document_prepared
+      - submitted
+      - accepted
+      - in_transit
+      - delivered
+      - returned
+      - submission_pending
+      - failed
+      - canceled
+      description: Order timeline status. `submission_pending` means the fulfillment submit job entered a physical-mail safety window where PostalForm cannot blindly retry without risking duplicate mail; it requires reconciliation if it remains the current order status.
+  parameters:
+    EventId:
+      name: event_id
+      in: path
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

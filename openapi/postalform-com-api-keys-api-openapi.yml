@@ -1,0 +1,98 @@
+openapi: 3.2.0
+info:
+  title: PostalForm Projects Public Api Keys API
+  version: '2026-05-06'
+  description: Public PostalForm Projects API for customer SDKs. Includes document uploads, quotes, mail orders, credits, API keys, and signed customer webhooks.
+servers:
+- url: https://projects.postalform.com
+tags:
+- name: API Keys
+paths:
+  /api/v1/api-keys:
+    get:
+      summary: List API key prefixes and status
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: API keys.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiKey'
+      operationId: listApiKeys
+      tags:
+      - API Keys
+  /api/v1/api-keys/rotate:
+    post:
+      summary: Rotate a test or live API key
+      security:
+      - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode:
+                  $ref: '#/components/schemas/Mode'
+              required:
+              - mode
+      responses:
+        '200':
+          description: New API key secret. Returned once.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyRotation'
+      operationId: rotateApiKey
+      tags:
+      - API Keys
+components:
+  schemas:
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
+    ApiKey:
+      type: object
+      properties:
+        id:
+          type: string
+        mode:
+          $ref: '#/components/schemas/Mode'
+        prefix:
+          type: string
+        status:
+          type: string
+          enum:
+          - active
+          - disabled
+          - revoked
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+    ApiKeyRotation:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/Mode'
+        api_key:
+          type: string
+          description: Full API key secret. Returned once.
+        api_key_prefix:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

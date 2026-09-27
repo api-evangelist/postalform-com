@@ -33,7 +33,7 @@ tags:
 - x402
 - Machine Payments
 - Webhook
-- agent-native
+- Agent-Native
 - United States
 tags_raw:
 - Physical mail
@@ -52,103 +52,25 @@ tags_raw:
 - United States
 - Print and Mail
 - Agent Commerce
+- agent-native
 apis:
-- aid: postalform-com:postalform-machine-payments-api
-  name: PostalForm Machine Payments API
-  description: >-
-    Machine-oriented print-and-mail REST API for autonomous agents: validate and quote, then create, pay for
-    and poll document mail orders (PDF, server-rendered letter in text/html/markdown/rtf, workflow form, or
-    CSV bulk campaign), flower letters and MPP-only shipping labels. No API key — every paid create answers
-    HTTP 402 with an x402 PAYMENT-REQUIRED header (USDC on Base, Coinbase CDP facilitator) or MPP
-    WWW-Authenticate: Payment challenges (Tempo, Stripe shared payment token, card), and the retry reuses the
-    same request_id, which the contract treats as a strict idempotency key. 17 operations across 17 paths,
-    OpenAPI 3.1.0 with x-payment-info and x-agent-guidance extensions, served at https://postalform.com/openapi.json.
-  humanURL: https://postalform.com/developers
-  baseURL: https://postalform.com/api/machine
-  tags:
-  - Physical Mail
-  - x402
-  - Machine Payments
-  - Agents
-  - Agentic Commerce
-  tags_raw:
-  - Physical Mail
-  - x402
-  - Machine Payments
-  - Agents
-  - Agent Commerce
-  properties:
-  - type: OpenAPI
-    url: openapi/postalform-com-machine-payments-openapi.json
-  - type: OpenAPI
-    name: PostalForm Machine Payments API OpenAPI (provider-hosted)
-    url: https://postalform.com/openapi.json
-  - type: Documentation
-    url: https://postalform.com/developers
-  - type: APIReference
-    url: https://postalform.com/openapi.json
-  - type: Documentation
-    name: Agents guide (x402 / MPP machine payments)
-    url: https://postalform.com/agents
-  - type: Overlay
-    url: overlays/postalform-com-machine-payments-overlay.yaml
-- aid: postalform-com:postalform-projects-public-api
-  name: PostalForm Projects Public API
-  description: >-
-    Developer mail infrastructure for server-side applications: per-workspace bearer API keys with a free
-    simulated test mode (pf_test_) and a live mode on prepaid credits (pf_live_), two-step PDF upload,
-    final-price quotes with a pricing_version, Idempotency-Key letter and postcard orders, order timelines
-    with carrier tracking and electronic return receipts, signed fulfillment webhooks (PostalForm-Signature)
-    with retries and replay, credit balance, ledger, top-up and auto-refill, and key rotation. 25 operations
-    under /api/v1, OpenAPI 3.1.0 (info.version 2026-05-06) served at https://projects.postalform.com/openapi.json.
-    Also provisionable as postalform/mail through Stripe Projects.
-  humanURL: https://projects.postalform.com/docs
-  baseURL: https://projects.postalform.com/api/v1
-  tags:
-  - Physical Mail
-  - Print & Mail
-  - Webhook
-  - Documents
-  - Certified Mail
-  tags_raw:
-  - Physical Mail
-  - Print and Mail
-  - Webhooks
-  - Documents
-  - Certified Mail
-  properties:
-  - type: OpenAPI
-    url: openapi/postalform-com-projects-openapi.json
-  - type: OpenAPI
-    name: PostalForm Projects Public API OpenAPI (provider-hosted)
-    url: https://projects.postalform.com/openapi.json
-  - type: Documentation
-    url: https://projects.postalform.com/docs
-  - type: APIReference
-    url: https://projects.postalform.com/openapi.json
-  - type: GettingStarted
-    url: https://postalform.com/developer-mail-api
-  - type: Webhooks
-    url: asyncapi/postalform-com-projects-webhooks.yml
-  - type: Overlay
-    url: overlays/postalform-com-projects-overlay.yaml
 - aid: postalform-com:postalform-mcp-server
   name: PostalForm MCP Server
   description: >-
     Remote Model Context Protocol server at https://postalform.com/mcp (Streamable HTTP, wire protocol
     2025-06-18, serverInfo postalform 0.1.0). initialize, tools/list and resources/list answer anonymously
     with 12 tools carrying real inputSchema, outputSchema and annotations: list_forms, get_form_schema,
-    search_addresses, create_pdf_upload, create_order_draft, preview_letter_order_draft,
-    create_letter_order_draft, create_form_order_draft, create_machine_order, complete_checkout,
-    get_order_status and ping. Draft tools return a hosted checkout_url and an ACP checkout_session so a
-    human approves before any mail is printed; create_machine_order answers MPP/x402 challenges for
-    authorized autonomous runtimes. Discoverable via /.well-known/mcp.json, mcp/server.json (MCP Registry
-    schema) and mcp/server-card.json; sibling UCP and ACP checkout MCP endpoints at /ucp/mcp and /acp/mcp.
+    search_addresses, create_pdf_upload, create_order_draft, preview_letter_order_draft, create_letter_order_draft,
+    create_form_order_draft, create_machine_order, complete_checkout, get_order_status and ping. Draft
+    tools return a hosted checkout_url and an ACP checkout_session so a human approves before any mail
+    is printed; create_machine_order answers MPP/x402 challenges for authorized autonomous runtimes. Discoverable
+    via /.well-known/mcp.json, mcp/server.json (MCP Registry schema) and mcp/server-card.json; sibling
+    UCP and ACP checkout MCP endpoints at /ucp/mcp and /acp/mcp.
   humanURL: https://postalform.com/developers
   baseURL: https://postalform.com/mcp
   tags:
   - MCP
-  - agent-native
+  - Agent-Native
   - Agentic Commerce
   - Physical Mail
   tags_raw:
@@ -171,15 +93,19 @@ apis:
   name: PostalForm A2A Agent
   description: >-
     Agent2Agent (A2A) surface: an agent card served from https://postalform.com/.well-known/agent-card.json
-    (protocolVersion 1.0, JSONRPC binding, version 0.1.0, a2a-version: 1.0 response header) advertising three
-    guidance skills — connect an agent to PostalForm MCP, plan a reviewable mail draft, plan an authorized
-    machine-paid order — with x402 and UCP discovery documents declared as capability extensions. The
-    declared JSON-RPC endpoint https://postalform.com/a2a returns the card on GET and answers tasks/get with
-    -32601 Method not found; the provider calls it a discovery bridge, and the executable surface is the MCP
-    server the card points at.
+    (protocolVersion 1.0, JSONRPC binding, version 0.1.0, a2a-version: 1.0 response header) advertising
+    three guidance skills — connect an agent to PostalForm MCP, plan a reviewable mail draft, plan an
+    authorized machine-paid order — with x402 and UCP discovery documents declared as capability extensions.
+    The declared JSON-RPC endpoint https://postalform.com/a2a returns the card on GET and answers tasks/get
+    with -32601 Method not found; the provider calls it a discovery bridge, and the executable surface
+    is the MCP server the card points at.
   humanURL: https://postalform.com/agents
   baseURL: https://postalform.com/a2a
   tags:
+  - A2A
+  - Agent-Native
+  - Agents
+  tags_raw:
   - A2A
   - agent-native
   - Agents
@@ -189,12 +115,232 @@ apis:
   - type: AgentCard
     name: A2A Agent Card (provider-hosted)
     url: https://postalform.com/.well-known/agent-card.json
+- aid: postalform-com:postalform-com-api-keys-api
+  name: PostalForm Api Keys API
+  description: The Api Keys API from PostalForm — 2 operation(s) for api keys.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Api Keys
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-api-keys-api-openapi.yml
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/agents
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
+- aid: postalform-com:postalform-com-credits-api
+  name: PostalForm Credits API
+  description: The Credits API from PostalForm — 6 operation(s) for credits.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Credits
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-credits-api-openapi.yml
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/agents
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
+- aid: postalform-com:postalform-com-documents-api
+  name: PostalForm Documents API
+  description: The Documents API from PostalForm — 2 operation(s) for documents.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Documents
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-documents-api-openapi.yml
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/agents
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
+- aid: postalform-com:postalform-com-letters-api
+  name: PostalForm Letters API
+  description: The Letters API from PostalForm — 5 operation(s) for letters.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Letters
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-letters-api-openapi.yml
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/agents
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
+- aid: postalform-com:postalform-com-machine-api
+  name: PostalForm Machine API
+  description: The Machine API from PostalForm — 17 operation(s) for machine.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Machine
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-machine-api-openapi.yml
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/agents
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
+- aid: postalform-com:postalform-com-postcards-api
+  name: PostalForm Postcards API
+  description: The Postcards API from PostalForm — 4 operation(s) for postcards.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Postcards
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-postcards-api-openapi.yml
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/agents
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
+- aid: postalform-com:postalform-com-return-receipts-api
+  name: PostalForm Return Receipts API
+  description: The Return Receipts API from PostalForm — 1 operation(s) for return receipts.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Return Receipts
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-return-receipts-api-openapi.yml
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/agents
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
+- aid: postalform-com:postalform-com-webhook-endpoints-api
+  name: PostalForm Webhook Endpoints API
+  description: The Webhook Endpoints API from PostalForm — 3 operation(s) for webhook endpoints.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Webhook Endpoints
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-webhook-endpoints-api-openapi.yml
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/agents
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
+- aid: postalform-com:postalform-com-webhook-events-api
+  name: PostalForm Webhook Events API
+  description: The Webhook Events API from PostalForm — 2 operation(s) for webhook events.
+  humanURL: https://postalform.com/developers
+  baseURL: https://postalform.com/api/machine
+  tags:
+  - Webhook Events
+  properties:
+  - type: OpenAPI
+    url: openapi/postalform-com-webhook-events-api-openapi.yml
+  - type: Documentation
+    url: https://postalform.com/developers
+  - type: APIReference
+    url: https://postalform.com/openapi.json
+  - type: Documentation
+    url: https://postalform.com/agents
+  - type: Documentation
+    url: https://projects.postalform.com/docs
+  - type: APIReference
+    url: https://projects.postalform.com/openapi.json
+  - type: GettingStarted
+    url: https://postalform.com/developer-mail-api
+  - type: Webhooks
+    url: asyncapi/postalform-com-projects-webhooks.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: Overlay
+  url: overlays/postalform-com-machine-payments-overlay.yaml
+- type: Overlay
+  url: overlays/postalform-com-projects-overlay.yaml
 - type: Website
   url: https://postalform.com/
 - type: DeveloperPortal
@@ -288,3 +434,10 @@ x-enrichment:
   status: enriched
   artifacts_added: 41
   pass: local-v3
+x-a2a:
+  verified: true
+  probed: '2026-09-26'
+  url: "https://postalform.com/.well-known/agent-card.json"
+  grade: "conformant"
+  protocol_version: "1.0"
+  control: 404
