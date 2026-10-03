@@ -144,50 +144,43 @@ paths:
       - Credits
 components:
   schemas:
-    BillingPaymentMethod:
+    CreditCheckoutSession:
       type: object
       properties:
         id:
           type: string
-        provider:
+          description: PostalForm top-up ID.
+        mode:
           type: string
           enum:
-          - stripe
-        type:
+          - stripe_checkout
+          - local_checkout_stub
+        checkout_url:
           type: string
-        brand:
-          type: string
-        last4:
-          type: string
-        exp_month:
-          type: integer
-        exp_year:
-          type: integer
-        status:
-          type: string
-          enum:
-          - active
-          - disabled
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        last_used_at:
-          type: string
-          format: date-time
-    CreditBalanceSnapshot:
-      type: object
-      properties:
-        available_cents:
-          type: integer
-        reserved_cents:
+          format: uri
+        amount_cents:
           type: integer
         currency:
           type: string
-        status:
-          type: string
+    CreditAutoRefillRequest:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/Mode'
+        enabled:
+          type: boolean
+          default: true
+        threshold_cents:
+          type: integer
+          minimum: 100
+          maximum: 100000
+        refill_amount_cents:
+          type: integer
+          minimum: 100
+          maximum: 100000
+      required:
+      - threshold_cents
+      - refill_amount_cents
     CreditAutoRefillPolicy:
       type: object
       properties:
@@ -231,40 +224,6 @@ components:
         updated_at:
           type: string
           format: date-time
-    CreditCheckoutSession:
-      type: object
-      properties:
-        id:
-          type: string
-          description: PostalForm top-up ID.
-        mode:
-          type: string
-          enum:
-          - stripe_checkout
-          - local_checkout_stub
-        checkout_url:
-          type: string
-          format: uri
-        amount_cents:
-          type: integer
-        currency:
-          type: string
-    Mode:
-      type: string
-      enum:
-      - test
-      - live
-    PaymentMethodSetupSession:
-      type: object
-      properties:
-        mode:
-          type: string
-          enum:
-          - stripe_checkout
-          - local_checkout_stub
-        checkout_url:
-          type: string
-          format: uri
     CreditBalance:
       type: object
       properties:
@@ -296,6 +255,11 @@ components:
           $ref: '#/components/schemas/CreditBalanceSnapshot'
         auto_refill:
           $ref: '#/components/schemas/CreditAutoRefillPolicies'
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
     CreditAutoRefillPolicies:
       type: object
       properties:
@@ -318,25 +282,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/CreditAutoRefillPolicy'
           - type: 'null'
-    CreditAutoRefillRequest:
-      type: object
-      properties:
-        mode:
-          $ref: '#/components/schemas/Mode'
-        enabled:
-          type: boolean
-          default: true
-        threshold_cents:
-          type: integer
-          minimum: 100
-          maximum: 100000
-        refill_amount_cents:
-          type: integer
-          minimum: 100
-          maximum: 100000
-      required:
-      - threshold_cents
-      - refill_amount_cents
     CreditLedgerEntry:
       type: object
       properties:
@@ -384,6 +329,61 @@ components:
         created_at:
           type: string
           format: date-time
+    BillingPaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        provider:
+          type: string
+          enum:
+          - stripe
+        type:
+          type: string
+        brand:
+          type: string
+        last4:
+          type: string
+        exp_month:
+          type: integer
+        exp_year:
+          type: integer
+        status:
+          type: string
+          enum:
+          - active
+          - disabled
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+    CreditBalanceSnapshot:
+      type: object
+      properties:
+        available_cents:
+          type: integer
+        reserved_cents:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+    PaymentMethodSetupSession:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+          - stripe_checkout
+          - local_checkout_stub
+        checkout_url:
+          type: string
+          format: uri
   securitySchemes:
     bearerAuth:
       type: http

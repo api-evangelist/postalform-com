@@ -81,13 +81,6 @@ paths:
       tags:
       - Documents
 components:
-  parameters:
-    DocumentId:
-      name: document_id
-      in: path
-      required: true
-      schema:
-        type: string
   schemas:
     UploadIntent:
       type: object
@@ -104,6 +97,13 @@ components:
         expires_at:
           type: string
           format: date-time
+  parameters:
+    DocumentId:
+      name: document_id
+      in: path
+      required: true
+      schema:
+        type: string
   securitySchemes:
     bearerAuth:
       type: http

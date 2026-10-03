@@ -56,11 +56,16 @@ paths:
       - API Keys
 components:
   schemas:
-    Mode:
-      type: string
-      enum:
-      - test
-      - live
+    ApiKeyRotation:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/Mode'
+        api_key:
+          type: string
+          description: Full API key secret. Returned once.
+        api_key_prefix:
+          type: string
     ApiKey:
       type: object
       properties:
@@ -82,16 +87,11 @@ components:
         last_used_at:
           type: string
           format: date-time
-    ApiKeyRotation:
-      type: object
-      properties:
-        mode:
-          $ref: '#/components/schemas/Mode'
-        api_key:
-          type: string
-          description: Full API key secret. Returned once.
-        api_key_prefix:
-          type: string
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
   securitySchemes:
     bearerAuth:
       type: http
