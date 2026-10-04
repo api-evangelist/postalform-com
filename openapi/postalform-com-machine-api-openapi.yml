@@ -1300,255 +1300,9 @@ paths:
       - Machine
 components:
   schemas:
-    MachineOrderValidationResponse:
+    MachineShippingLabelValidationResponse:
       type: object
       additionalProperties: false
-      properties:
-        request_id:
-          type: string
-          format: uuid
-        request_hash:
-          type: string
-        order_id:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-          description: Canonical server order id for an existing reusable draft, if one was found. This may differ from request_id when PostalForm collapses duplicate unpaid attempts.
-        status:
-          type: string
-          enum:
-          - validated_existing_order
-          - validated_new_order
-        postcard_guidelines_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-          description: Canonical postcard PDF formatting guide. Present for postcard validation responses and null for letter responses.
-        bulk:
-          anyOf:
-          - type: object
-            additionalProperties: false
-            properties:
-              recipient_count:
-                type: integer
-                minimum: 1
-              content_mode:
-                type: string
-                enum:
-                - text
-                - html
-                - pdf
-            required:
-            - recipient_count
-            - content_mode
-          - type: 'null'
-          description: Bulk campaign metadata when validating a bulk machine request. Null for single-recipient orders.
-        quote:
-          type: object
-          additionalProperties: false
-          properties:
-            price_usd:
-              type: number
-            full_price_usd:
-              type: number
-            currency:
-              type: string
-              enum:
-              - usd
-            page_count:
-              type: integer
-              minimum: 1
-            billable_page_count:
-              type: integer
-              minimum: 1
-            double_sided:
-              type: boolean
-            color:
-              type: boolean
-            mail_class:
-              type: string
-              enum:
-              - standard
-              - priority
-              - express
-            certified:
-              type: boolean
-            certified_return_receipt:
-              type: boolean
-            return_receipt_format:
-              type: string
-              enum:
-              - electronic
-              - physical
-            restricted_delivery:
-              type: boolean
-            err_delivery:
-              type: string
-              enum:
-              - manual
-              - email
-            err_email:
-              anyOf:
-              - type: string
-                format: email
-              - type: 'null'
-            signature_required:
-              type: boolean
-            mailpiece_type:
-              type: string
-              enum:
-              - letter
-              - postcard
-            postcard_size:
-              anyOf:
-              - type: string
-                enum:
-                - 4x6
-                - 6x9
-                - 11x6
-              - type: 'null'
-            provider:
-              type: string
-          required:
-          - price_usd
-          - full_price_usd
-          - currency
-          - page_count
-          - billable_page_count
-          - double_sided
-          - color
-          - mail_class
-          - certified
-          - certified_return_receipt
-          - mailpiece_type
-          - postcard_size
-          - provider
-      required:
-      - request_id
-      - request_hash
-      - order_id
-      - status
-      - postcard_guidelines_url
-      - quote
-    MachineErrorResponse:
-      type: object
-      additionalProperties: false
-      properties:
-        message:
-          type: string
-        code:
-          type: string
-        order_id:
-          type: string
-          format: uuid
-        errors:
-          type: array
-          items:
-            type: object
-            additionalProperties: false
-            properties:
-              path:
-                type: string
-              code:
-                type: string
-              message:
-                type: string
-              hint:
-                type: string
-              fix_examples:
-                type: array
-                items:
-                  anyOf:
-                  - type: string
-                  - type: object
-                    additionalProperties: true
-            required:
-            - path
-            - code
-            - message
-      required:
-      - message
-      - code
-    MachineWorkflowFormSchema:
-      type: object
-      additionalProperties: true
-      description: Machine-usable workflow schema returned by the same schema renderer used by PostalForm MCP. It includes fields, groups, attachments, dependencies, and machine_submission.create_paths.
-    MachineWorkflowFormListResponse:
-      type: object
-      additionalProperties: false
-      properties:
-        forms:
-          type: array
-          items:
-            type: object
-            additionalProperties: true
-            properties:
-              slug:
-                type: string
-              name:
-                type: string
-              description:
-                anyOf:
-                - type: string
-                - type: 'null'
-              category:
-                anyOf:
-                - type: string
-                - type: 'null'
-              certified_mail:
-                type: string
-                enum:
-                - required
-                - optional
-                - none
-              recipient_mode:
-                type: string
-              attachments:
-                type: array
-                items:
-                  type: object
-                  additionalProperties: true
-                  properties:
-                    id:
-                      type: string
-                    label:
-                      type: string
-                    required:
-                      type: boolean
-                  required:
-                  - id
-                  - label
-                  - required
-              create_paths:
-                type: object
-                additionalProperties: false
-                properties:
-                  x402:
-                    type: string
-                  mpp:
-                    type: string
-                required:
-                - x402
-                - mpp
-            required:
-            - slug
-            - name
-            - certified_mail
-            - recipient_mode
-            - attachments
-            - create_paths
-        next_cursor:
-          anyOf:
-          - type: string
-          - type: 'null'
-      required:
-      - forms
-      - next_cursor
-    MachineFlowerLetterValidationResponse:
-      type: object
-      additionalProperties: true
       properties:
         request_id:
           type: string
@@ -1580,318 +1334,7 @@ components:
         product_type:
           type: string
           enum:
-          - flower_letter
-        quote:
-          type: object
-          additionalProperties: true
-          properties:
-            product:
-              type: object
-              additionalProperties: true
-              properties:
-                code:
-                  type: string
-                name:
-                  type: string
-                priceCents:
-                  type: integer
-                  description: Arrangement price before Florist One delivery charges and destination tax.
-                small:
-                  anyOf:
-                  - type: string
-                    format: uri
-                  - type: 'null'
-                large:
-                  anyOf:
-                  - type: string
-                    format: uri
-                  - type: 'null'
-              required:
-              - code
-              - name
-              - priceCents
-            total:
-              type: object
-              additionalProperties: true
-              properties:
-                subtotalCents:
-                  type: integer
-                orderTotalCents:
-                  type: integer
-                taxTotalCents:
-                  anyOf:
-                  - type: integer
-                  - type: 'null'
-                deliveryChargeCents:
-                  anyOf:
-                  - type: integer
-                  - type: 'null'
-              required:
-              - subtotalCents
-              - orderTotalCents
-          required:
-          - product
-          - total
-      required:
-      - request_id
-      - request_hash
-      - order_id
-      - status
-      - product_type
-      - quote
-    MachineOrderStatus:
-      type: object
-      additionalProperties: true
-      properties:
-        order_id:
-          type: string
-          format: uuid
-          description: Canonical server order id. This may differ from request_id when PostalForm reuses an existing unpaid draft.
-        status:
-          type: string
-        payment_status:
-          type: string
-        is_paid:
-          type: boolean
-        current_step:
-          anyOf:
-          - type: string
-          - type: 'null'
-        payment_intent_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        payment_channel:
-          anyOf:
-          - type: string
-          - type: 'null'
-        price_usd:
-          anyOf:
-          - type: number
-          - type: string
-          - type: 'null'
-        currency:
-          anyOf:
-          - type: string
-          - type: 'null'
-        mailpiece_type:
-          type: string
-          enum:
-          - letter
-          - postcard
-        postcard_size:
-          anyOf:
-          - type: string
-            enum:
-            - 4x6
-            - 6x9
-            - 11x6
-          - type: 'null'
-        postcard_guidelines_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-          description: Canonical postcard PDF formatting guide. Present for postcard responses and null for letter responses.
-        certified:
-          type: boolean
-        certified_return_receipt:
-          type: boolean
-        return_receipt_format:
-          type: string
-          enum:
-          - electronic
-          - physical
-        restricted_delivery:
-          type: boolean
-        err_delivery:
-          type: string
-          enum:
-          - manual
-          - email
-        err_email:
-          anyOf:
-          - type: string
-            format: email
-          - type: 'null'
-        err_status:
-          type: string
-          enum:
-          - manual
-          - pending
-          - sent
-          - failed
-        err_document_available:
-          type: boolean
-        err_delivered_at:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-        tracking_number:
-          anyOf:
-          - type: string
-          - type: 'null'
-        tracking_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-        usps_tracking_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-        machine_payment:
-          type: object
-          additionalProperties: true
-          properties:
-            protocol:
-              type: string
-              enum:
-              - x402
-              - mpp
-            method:
-              type: string
-            network:
-              type: string
-            recipient:
-              type: string
-            settlement_reference:
-              anyOf:
-              - type: string
-              - type: 'null'
-            settled_at:
-              anyOf:
-              - type: string
-                format: date-time
-              - type: 'null'
-            testnet:
-              anyOf:
-              - type: boolean
-              - type: 'null'
-          required:
-          - protocol
-          - method
-          - network
-          - recipient
-          - settlement_reference
-          - settled_at
-        x402:
-          type: object
-          additionalProperties: false
-          properties:
-            network:
-              anyOf:
-              - type: string
-              - type: 'null'
-            pay_to:
-              anyOf:
-              - type: string
-              - type: 'null'
-            settlement_tx:
-              anyOf:
-              - type: string
-              - type: 'null'
-            settled_at:
-              anyOf:
-              - type: string
-                format: date-time
-              - type: 'null'
-          required:
-          - network
-          - pay_to
-          - settlement_tx
-          - settled_at
-        campaign_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Bulk campaign dashboard route for mailing_campaign orders. Null for single-recipient orders.
-        order_complete_url:
-          type: string
-          description: Either the completion URL after payment settles or a placeholder message before settlement.
-      required:
-      - order_id
-      - status
-      - payment_status
-      - is_paid
-      - current_step
-      - payment_intent_id
-      - payment_channel
-      - price_usd
-      - currency
-      - mailpiece_type
-      - postcard_size
-      - postcard_guidelines_url
-      - machine_payment
-      - order_complete_url
-    MachineShippingLabelOrder:
-      type: object
-      additionalProperties: true
-      properties:
-        order_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-        payment_status:
-          type: string
-        fulfillment_status:
-          type: string
-        is_paid:
-          type: boolean
-        current_step:
-          anyOf:
-          - type: string
-          - type: 'null'
-        payment_intent_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        payment_channel:
-          anyOf:
-          - type: string
-          - type: 'null'
-        price_usd:
-          anyOf:
-          - type: number
-          - type: string
-          - type: 'null'
-        currency:
-          anyOf:
-          - type: string
-          - type: 'null'
-        product_type:
-          type: string
-          enum:
           - shipping_label
-        carrier:
-          type: string
-        service:
-          type: string
-        tracking_code:
-          anyOf:
-          - type: string
-          - type: 'null'
-        status_url:
-          type: string
-          format: uri
-        order_complete_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-        label_download_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-        label_download_expires_at:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
         quote:
           type: object
           additionalProperties: false
@@ -1976,381 +1419,15 @@ components:
           - selected_rate
           - available_rates
           - note
-        error:
-          anyOf:
-          - type: string
-          - type: 'null'
-      required:
-      - order_id
-      - status
-      - payment_status
-      - fulfillment_status
-      - is_paid
-      - current_step
-      - payment_intent_id
-      - payment_channel
-      - price_usd
-      - currency
-      - product_type
-      - carrier
-      - service
-      - tracking_code
-      - status_url
-      - order_complete_url
-      - label_download_url
-      - label_download_expires_at
-      - quote
-      - error
-    MachineFlowerLetterRequest:
-      type: object
-      additionalProperties: false
-      description: Dedicated flower-letter payload for machine payment flows. PostalForm validates the Florist One product, ZIP delivery dates, and total before issuing a payment challenge. The requester IP is collected from the incoming request.
-      properties:
-        request_id:
-          type: string
-          format: uuid
-          description: Client-generated idempotency key. Reuse the same value and exact body after a 402 challenge.
-        buyer_name:
-          type: string
-          minLength: 1
-          maxLength: 100
-        buyer_email:
-          type: string
-          format: email
-          maxLength: 100
-        note:
-          type: string
-          minLength: 1
-          maxLength: 200
-          description: Message attached to the real flowers on the florist card.
-        zipcode:
-          type: string
-          pattern: ^\d{5}(?:-\d{4})?$
-          description: Recipient delivery ZIP used for Florist One catalog totals and delivery dates.
-        product_code:
-          type: string
-          minLength: 1
-          maxLength: 64
-          description: Florist One product code selected from the catalog.
-        delivery_date:
-          type: string
-          format: date
-          description: Requested Florist One delivery date. The date is checked again after payment.
-        customer:
-          type: object
-          additionalProperties: false
-          properties:
-            name:
-              type: string
-              minLength: 1
-              maxLength: 100
-            phone:
-              type: string
-              minLength: 1
-              maxLength: 32
-              description: US 10 digit phone number. Formatting characters are accepted.
-            address1:
-              type: string
-              minLength: 1
-              maxLength: 100
-            address2:
-              type: string
-              maxLength: 100
-            city:
-              type: string
-              minLength: 1
-              maxLength: 100
-            state:
-              type: string
-              pattern: ^[A-Z]{2}$
-            zipcode:
-              type: string
-              pattern: ^\d{5}(?:-\d{4})?$
-            country:
-              type: string
-              pattern: ^[A-Z]{2}$
-              description: Two-letter country code. Defaults to US when omitted.
-            email:
-              type: string
-              format: email
-              description: Optional customer email. Defaults to buyer_email when omitted.
-          required:
-          - name
-          - phone
-          - address1
-          - city
-          - state
-          - zipcode
-        recipient:
-          type: object
-          additionalProperties: false
-          properties:
-            name:
-              type: string
-              minLength: 1
-              maxLength: 100
-            phone:
-              type: string
-              minLength: 1
-              maxLength: 32
-              description: US 10 digit phone number. Formatting characters are accepted.
-            address1:
-              type: string
-              minLength: 1
-              maxLength: 100
-            address2:
-              type: string
-              maxLength: 100
-            city:
-              type: string
-              minLength: 1
-              maxLength: 100
-            state:
-              type: string
-              pattern: ^[A-Z]{2}$
-            zipcode:
-              type: string
-              pattern: ^\d{5}(?:-\d{4})?$
-            country:
-              type: string
-              pattern: ^[A-Z]{2}$
-              description: Two-letter country code. Defaults to US when omitted.
-            institution:
-              type: string
-              maxLength: 100
-              description: Optional facility, business, or hospital name.
-          required:
-          - name
-          - phone
-          - address1
-          - city
-          - state
-          - zipcode
-        special_instructions:
-          type: string
-          maxLength: 100
-        allow_substitutions:
-          type: boolean
-          description: Defaults to true.
       required:
       - request_id
-      - buyer_name
-      - buyer_email
-      - note
-      - zipcode
-      - product_code
-      - delivery_date
-      - customer
-      - recipient
-      examples:
-      - request_id: 8c1a1b58-2c8f-4f4f-9c46-2c1ac32d7a1b
-        buyer_name: Agent Owner
-        buyer_email: owner@example.com
-        note: For your desk, your day, and the smile I hope this brings.
-        zipcode: '32503'
-        product_code: F1-509
-        delivery_date: '2026-05-08'
-        customer:
-          name: Agent Owner
-          phone: '8505550100'
-          address1: 123 Sender St
-          city: Pensacola
-          state: FL
-          zipcode: '32503'
-          country: US
-          email: owner@example.com
-        recipient:
-          name: Recipient Example
-          phone: '8505550199'
-          address1: 456 Recipient Ave
-          city: Pensacola
-          state: FL
-          zipcode: '32503'
-          country: US
-        allow_substitutions: true
-    MachineOrder:
-      type: object
-      additionalProperties: true
-      properties:
-        order_id:
-          type: string
-          format: uuid
-          description: Canonical server order id. This may differ from request_id when PostalForm reuses an existing unpaid draft.
-        status:
-          type: string
-        payment_status:
-          type: string
-        is_paid:
-          type: boolean
-        current_step:
-          anyOf:
-          - type: string
-          - type: 'null'
-        payment_intent_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        payment_channel:
-          anyOf:
-          - type: string
-          - type: 'null'
-        price_usd:
-          anyOf:
-          - type: number
-          - type: string
-          - type: 'null'
-        currency:
-          anyOf:
-          - type: string
-          - type: 'null'
-        mailpiece_type:
-          type: string
-          enum:
-          - letter
-          - postcard
-        postcard_size:
-          anyOf:
-          - type: string
-            enum:
-            - 4x6
-            - 6x9
-            - 11x6
-          - type: 'null'
-        postcard_guidelines_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-          description: Canonical postcard PDF formatting guide. Present for postcard responses and null for letter responses.
-        certified:
-          type: boolean
-        certified_return_receipt:
-          type: boolean
-        return_receipt_format:
-          type: string
-          enum:
-          - electronic
-          - physical
-        restricted_delivery:
-          type: boolean
-        err_delivery:
-          type: string
-          enum:
-          - manual
-          - email
-        err_email:
-          anyOf:
-          - type: string
-            format: email
-          - type: 'null'
-        err_status:
-          type: string
-          enum:
-          - manual
-          - pending
-          - sent
-          - failed
-        err_document_available:
-          type: boolean
-        err_delivered_at:
-          anyOf:
-          - type: string
-            format: date-time
-          - type: 'null'
-        tracking_number:
-          anyOf:
-          - type: string
-          - type: 'null'
-        tracking_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-        usps_tracking_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-        machine_payment:
-          type: object
-          additionalProperties: true
-          properties:
-            protocol:
-              type: string
-              enum:
-              - x402
-              - mpp
-            method:
-              type: string
-            network:
-              type: string
-            recipient:
-              type: string
-            settlement_reference:
-              anyOf:
-              - type: string
-              - type: 'null'
-            settled_at:
-              anyOf:
-              - type: string
-                format: date-time
-              - type: 'null'
-            testnet:
-              anyOf:
-              - type: boolean
-              - type: 'null'
-          required:
-          - protocol
-          - method
-          - network
-          - recipient
-          - settlement_reference
-          - settled_at
-        x402:
-          type: object
-          additionalProperties: false
-          properties:
-            network:
-              anyOf:
-              - type: string
-              - type: 'null'
-            pay_to:
-              anyOf:
-              - type: string
-              - type: 'null'
-            settlement_tx:
-              anyOf:
-              - type: string
-              - type: 'null'
-            settled_at:
-              anyOf:
-              - type: string
-                format: date-time
-              - type: 'null'
-          required:
-          - network
-          - pay_to
-          - settlement_tx
-          - settled_at
-        campaign_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Bulk campaign dashboard route for mailing_campaign orders. Null for single-recipient orders.
-      required:
+      - request_hash
       - order_id
       - status
-      - payment_status
-      - is_paid
-      - current_step
-      - payment_intent_id
-      - payment_channel
-      - price_usd
-      - currency
-      - mailpiece_type
-      - postcard_size
-      - postcard_guidelines_url
-      - machine_payment
+      - protocol
+      - methods
+      - product_type
+      - quote
     MachineOrderRequest:
       type: object
       additionalProperties: false
@@ -3773,305 +2850,77 @@ components:
             John Smith,456 Oak Ave,Apt 2,Chicago,IL,60601,ACCT-200'
           content_mode: text
           template_text: Hello {{recipient_name}}, your account reference is {{account_number}}.
-    FlowerLetterPaymentRequiredResponse:
-      type: object
-      additionalProperties: true
-      properties:
-        order_id:
-          type: string
-          format: uuid
-        request_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-          - payment_required
-        product_type:
-          type: string
-          enum:
-          - flower_letter
-        message:
-          type: string
-        price_breakdown:
-          anyOf:
-          - type: object
-            additionalProperties: false
-            properties:
-              product_name:
-                type: string
-              delivery_zipcode:
-                type: string
-              arrangement_price_cents:
-                type: integer
-                description: Arrangement price before Florist One delivery charges and destination tax.
-              delivery_charge_cents:
-                anyOf:
-                - type: integer
-                - type: 'null'
-              tax_total_cents:
-                anyOf:
-                - type: integer
-                - type: 'null'
-              order_total_cents:
-                type: integer
-              currency:
-                type: string
-                enum:
-                - usd
-              note:
-                type: string
-            required:
-            - product_name
-            - delivery_zipcode
-            - arrangement_price_cents
-            - delivery_charge_cents
-            - tax_total_cents
-            - order_total_cents
-            - currency
-            - note
-          - type: 'null'
-      required:
-      - order_id
-      - request_id
-      - status
-      - product_type
-      - message
-    MachineFlowerLetterOrder:
-      type: object
-      additionalProperties: true
-      properties:
-        order_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-        payment_status:
-          type: string
-        is_paid:
-          type: boolean
-        current_step:
-          anyOf:
-          - type: string
-          - type: 'null'
-        payment_intent_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        payment_channel:
-          anyOf:
-          - type: string
-          - type: 'null'
-        price_usd:
-          anyOf:
-          - type: number
-          - type: string
-          - type: 'null'
-        currency:
-          anyOf:
-          - type: string
-          - type: 'null'
-        product_type:
-          type: string
-          enum:
-          - flower_letter
-        order_complete_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-      required:
-      - order_id
-      - status
-      - payment_status
-      - is_paid
-      - current_step
-      - payment_intent_id
-      - payment_channel
-      - price_usd
-      - currency
-      - product_type
-    X402PaymentRequiredResponse:
+    MachineWorkflowFormListResponse:
       type: object
       additionalProperties: false
       properties:
-        order_id:
-          type: string
-          format: uuid
-        request_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum:
-          - payment_required
-        mailpiece_type:
-          type: string
-          enum:
-          - letter
-          - postcard
-        postcard_size:
-          anyOf:
-          - type: string
-            enum:
-            - 4x6
-            - 6x9
-            - 11x6
-          - type: 'null'
-        postcard_guidelines_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-          description: Canonical postcard PDF formatting guide. Present for postcard payment challenges and null for letter responses.
-        preview_url:
-          anyOf:
-          - type: string
-            format: uri
-          - type: 'null'
-          description: Signed short-lived PDF preview URL for the unpaid single-recipient draft. Null when no draft PDF preview is available.
-        campaign_url:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Bulk campaign dashboard route for mailing_campaign orders. Null for single-recipient orders.
-        message:
-          type: string
-      required:
-      - order_id
-      - request_id
-      - status
-      - mailpiece_type
-      - postcard_size
-      - postcard_guidelines_url
-      - message
-    MachineShippingLabelValidationResponse:
-      type: object
-      additionalProperties: false
-      properties:
-        request_id:
-          type: string
-          format: uuid
-        request_hash:
-          type: string
-        order_id:
-          anyOf:
-          - type: string
-            format: uuid
-          - type: 'null'
-        status:
-          type: string
-          enum:
-          - validated_existing_order
-          - validated_new_order
-        protocol:
-          type: string
-          enum:
-          - mpp
-        methods:
+        forms:
           type: array
           items:
-            type: string
-            enum:
-            - tempo
-            - stripe_spt
-            - card
-        product_type:
-          type: string
-          enum:
-          - shipping_label
-        quote:
-          type: object
-          additionalProperties: false
-          properties:
-            quote_id:
-              type: string
-              description: EasyPost shipment id backing this quote.
-            expires_at:
-              type: string
-              format: date-time
-            selected_rate:
-              type: object
-              additionalProperties: false
-              properties:
-                carrier:
-                  type: string
-                service:
-                  type: string
-                total_cents:
-                  type: integer
-                  minimum: 1
-                currency:
-                  type: string
-                  enum:
-                  - usd
-                delivery_days:
-                  anyOf:
-                  - type: integer
-                  - type: 'null'
-                delivery_date:
-                  anyOf:
-                  - type: string
-                  - type: 'null'
-                delivery_date_guaranteed:
-                  anyOf:
-                  - type: boolean
-                  - type: 'null'
-              required:
-              - carrier
-              - service
-              - total_cents
-              - currency
-            available_rates:
-              type: array
-              items:
+            type: object
+            additionalProperties: true
+            properties:
+              slug:
+                type: string
+              name:
+                type: string
+              description:
+                anyOf:
+                - type: string
+                - type: 'null'
+              category:
+                anyOf:
+                - type: string
+                - type: 'null'
+              certified_mail:
+                type: string
+                enum:
+                - required
+                - optional
+                - none
+              recipient_mode:
+                type: string
+              attachments:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                  properties:
+                    id:
+                      type: string
+                    label:
+                      type: string
+                    required:
+                      type: boolean
+                  required:
+                  - id
+                  - label
+                  - required
+              create_paths:
                 type: object
                 additionalProperties: false
                 properties:
-                  carrier:
+                  x402:
                     type: string
-                  service:
+                  mpp:
                     type: string
-                  total_cents:
-                    type: integer
-                    minimum: 1
-                  currency:
-                    type: string
-                    enum:
-                    - usd
-                  delivery_days:
-                    anyOf:
-                    - type: integer
-                    - type: 'null'
-                  delivery_date:
-                    anyOf:
-                    - type: string
-                    - type: 'null'
-                  delivery_date_guaranteed:
-                    anyOf:
-                    - type: boolean
-                    - type: 'null'
                 required:
-                - carrier
-                - service
-                - total_cents
-                - currency
-            note:
-              type: string
-          required:
-          - quote_id
-          - expires_at
-          - selected_rate
-          - available_rates
-          - note
+                - x402
+                - mpp
+            required:
+            - slug
+            - name
+            - certified_mail
+            - recipient_mode
+            - attachments
+            - create_paths
+        next_cursor:
+          anyOf:
+          - type: string
+          - type: 'null'
       required:
-      - request_id
-      - request_hash
-      - order_id
-      - status
-      - protocol
-      - methods
-      - product_type
-      - quote
+      - forms
+      - next_cursor
     MachineShippingLabelRequest:
       type: object
       additionalProperties: false
@@ -4254,6 +3103,247 @@ components:
           height_in: 4
         carrier: USPS
         service: GroundAdvantage
+    X402PaymentRequiredResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - payment_required
+        mailpiece_type:
+          type: string
+          enum:
+          - letter
+          - postcard
+        postcard_size:
+          anyOf:
+          - type: string
+            enum:
+            - 4x6
+            - 6x9
+            - 11x6
+          - type: 'null'
+        postcard_guidelines_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+          description: Canonical postcard PDF formatting guide. Present for postcard payment challenges and null for letter responses.
+        preview_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+          description: Signed short-lived PDF preview URL for the unpaid single-recipient draft. Null when no draft PDF preview is available.
+        campaign_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Bulk campaign dashboard route for mailing_campaign orders. Null for single-recipient orders.
+        message:
+          type: string
+      required:
+      - order_id
+      - request_id
+      - status
+      - mailpiece_type
+      - postcard_size
+      - postcard_guidelines_url
+      - message
+    MachineOrderStatus:
+      type: object
+      additionalProperties: true
+      properties:
+        order_id:
+          type: string
+          format: uuid
+          description: Canonical server order id. This may differ from request_id when PostalForm reuses an existing unpaid draft.
+        status:
+          type: string
+        payment_status:
+          type: string
+        is_paid:
+          type: boolean
+        current_step:
+          anyOf:
+          - type: string
+          - type: 'null'
+        payment_intent_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        payment_channel:
+          anyOf:
+          - type: string
+          - type: 'null'
+        price_usd:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+        currency:
+          anyOf:
+          - type: string
+          - type: 'null'
+        mailpiece_type:
+          type: string
+          enum:
+          - letter
+          - postcard
+        postcard_size:
+          anyOf:
+          - type: string
+            enum:
+            - 4x6
+            - 6x9
+            - 11x6
+          - type: 'null'
+        postcard_guidelines_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+          description: Canonical postcard PDF formatting guide. Present for postcard responses and null for letter responses.
+        certified:
+          type: boolean
+        certified_return_receipt:
+          type: boolean
+        return_receipt_format:
+          type: string
+          enum:
+          - electronic
+          - physical
+        restricted_delivery:
+          type: boolean
+        err_delivery:
+          type: string
+          enum:
+          - manual
+          - email
+        err_email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+        err_status:
+          type: string
+          enum:
+          - manual
+          - pending
+          - sent
+          - failed
+        err_document_available:
+          type: boolean
+        err_delivered_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        tracking_number:
+          anyOf:
+          - type: string
+          - type: 'null'
+        tracking_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+        usps_tracking_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+        machine_payment:
+          type: object
+          additionalProperties: true
+          properties:
+            protocol:
+              type: string
+              enum:
+              - x402
+              - mpp
+            method:
+              type: string
+            network:
+              type: string
+            recipient:
+              type: string
+            settlement_reference:
+              anyOf:
+              - type: string
+              - type: 'null'
+            settled_at:
+              anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            testnet:
+              anyOf:
+              - type: boolean
+              - type: 'null'
+          required:
+          - protocol
+          - method
+          - network
+          - recipient
+          - settlement_reference
+          - settled_at
+        x402:
+          type: object
+          additionalProperties: false
+          properties:
+            network:
+              anyOf:
+              - type: string
+              - type: 'null'
+            pay_to:
+              anyOf:
+              - type: string
+              - type: 'null'
+            settlement_tx:
+              anyOf:
+              - type: string
+              - type: 'null'
+            settled_at:
+              anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+          required:
+          - network
+          - pay_to
+          - settlement_tx
+          - settled_at
+        campaign_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Bulk campaign dashboard route for mailing_campaign orders. Null for single-recipient orders.
+        order_complete_url:
+          type: string
+          description: Either the completion URL after payment settles or a placeholder message before settlement.
+      required:
+      - order_id
+      - status
+      - payment_status
+      - is_paid
+      - current_step
+      - payment_intent_id
+      - payment_channel
+      - price_usd
+      - currency
+      - mailpiece_type
+      - postcard_size
+      - postcard_guidelines_url
+      - machine_payment
+      - order_complete_url
     MppPaymentRequiredResponse:
       type: object
       additionalProperties: true
@@ -4344,3 +3434,913 @@ components:
       - request_id
       - message
       - supported_methods
+    MachineFlowerLetterValidationResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        request_hash:
+          type: string
+        order_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+        status:
+          type: string
+          enum:
+          - validated_existing_order
+          - validated_new_order
+        protocol:
+          type: string
+          enum:
+          - mpp
+        methods:
+          type: array
+          items:
+            type: string
+            enum:
+            - tempo
+            - stripe_spt
+            - card
+        product_type:
+          type: string
+          enum:
+          - flower_letter
+        quote:
+          type: object
+          additionalProperties: true
+          properties:
+            product:
+              type: object
+              additionalProperties: true
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+                priceCents:
+                  type: integer
+                  description: Arrangement price before Florist One delivery charges and destination tax.
+                small:
+                  anyOf:
+                  - type: string
+                    format: uri
+                  - type: 'null'
+                large:
+                  anyOf:
+                  - type: string
+                    format: uri
+                  - type: 'null'
+              required:
+              - code
+              - name
+              - priceCents
+            total:
+              type: object
+              additionalProperties: true
+              properties:
+                subtotalCents:
+                  type: integer
+                orderTotalCents:
+                  type: integer
+                taxTotalCents:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                deliveryChargeCents:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+              required:
+              - subtotalCents
+              - orderTotalCents
+          required:
+          - product
+          - total
+      required:
+      - request_id
+      - request_hash
+      - order_id
+      - status
+      - product_type
+      - quote
+    MachineWorkflowFormSchema:
+      type: object
+      additionalProperties: true
+      description: Machine-usable workflow schema returned by the same schema renderer used by PostalForm MCP. It includes fields, groups, attachments, dependencies, and machine_submission.create_paths.
+    MachineOrderValidationResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        request_hash:
+          type: string
+        order_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          description: Canonical server order id for an existing reusable draft, if one was found. This may differ from request_id when PostalForm collapses duplicate unpaid attempts.
+        status:
+          type: string
+          enum:
+          - validated_existing_order
+          - validated_new_order
+        postcard_guidelines_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+          description: Canonical postcard PDF formatting guide. Present for postcard validation responses and null for letter responses.
+        bulk:
+          anyOf:
+          - type: object
+            additionalProperties: false
+            properties:
+              recipient_count:
+                type: integer
+                minimum: 1
+              content_mode:
+                type: string
+                enum:
+                - text
+                - html
+                - pdf
+            required:
+            - recipient_count
+            - content_mode
+          - type: 'null'
+          description: Bulk campaign metadata when validating a bulk machine request. Null for single-recipient orders.
+        quote:
+          type: object
+          additionalProperties: false
+          properties:
+            price_usd:
+              type: number
+            full_price_usd:
+              type: number
+            currency:
+              type: string
+              enum:
+              - usd
+            page_count:
+              type: integer
+              minimum: 1
+            billable_page_count:
+              type: integer
+              minimum: 1
+            double_sided:
+              type: boolean
+            color:
+              type: boolean
+            mail_class:
+              type: string
+              enum:
+              - standard
+              - priority
+              - express
+            certified:
+              type: boolean
+            certified_return_receipt:
+              type: boolean
+            return_receipt_format:
+              type: string
+              enum:
+              - electronic
+              - physical
+            restricted_delivery:
+              type: boolean
+            err_delivery:
+              type: string
+              enum:
+              - manual
+              - email
+            err_email:
+              anyOf:
+              - type: string
+                format: email
+              - type: 'null'
+            signature_required:
+              type: boolean
+            mailpiece_type:
+              type: string
+              enum:
+              - letter
+              - postcard
+            postcard_size:
+              anyOf:
+              - type: string
+                enum:
+                - 4x6
+                - 6x9
+                - 11x6
+              - type: 'null'
+            provider:
+              type: string
+          required:
+          - price_usd
+          - full_price_usd
+          - currency
+          - page_count
+          - billable_page_count
+          - double_sided
+          - color
+          - mail_class
+          - certified
+          - certified_return_receipt
+          - mailpiece_type
+          - postcard_size
+          - provider
+      required:
+      - request_id
+      - request_hash
+      - order_id
+      - status
+      - postcard_guidelines_url
+      - quote
+    MachineFlowerLetterOrder:
+      type: object
+      additionalProperties: true
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        payment_status:
+          type: string
+        is_paid:
+          type: boolean
+        current_step:
+          anyOf:
+          - type: string
+          - type: 'null'
+        payment_intent_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        payment_channel:
+          anyOf:
+          - type: string
+          - type: 'null'
+        price_usd:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+        currency:
+          anyOf:
+          - type: string
+          - type: 'null'
+        product_type:
+          type: string
+          enum:
+          - flower_letter
+        order_complete_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - order_id
+      - status
+      - payment_status
+      - is_paid
+      - current_step
+      - payment_intent_id
+      - payment_channel
+      - price_usd
+      - currency
+      - product_type
+    MachineShippingLabelOrder:
+      type: object
+      additionalProperties: true
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        payment_status:
+          type: string
+        fulfillment_status:
+          type: string
+        is_paid:
+          type: boolean
+        current_step:
+          anyOf:
+          - type: string
+          - type: 'null'
+        payment_intent_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        payment_channel:
+          anyOf:
+          - type: string
+          - type: 'null'
+        price_usd:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+        currency:
+          anyOf:
+          - type: string
+          - type: 'null'
+        product_type:
+          type: string
+          enum:
+          - shipping_label
+        carrier:
+          type: string
+        service:
+          type: string
+        tracking_code:
+          anyOf:
+          - type: string
+          - type: 'null'
+        status_url:
+          type: string
+          format: uri
+        order_complete_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+        label_download_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+        label_download_expires_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        quote:
+          type: object
+          additionalProperties: false
+          properties:
+            quote_id:
+              type: string
+              description: EasyPost shipment id backing this quote.
+            expires_at:
+              type: string
+              format: date-time
+            selected_rate:
+              type: object
+              additionalProperties: false
+              properties:
+                carrier:
+                  type: string
+                service:
+                  type: string
+                total_cents:
+                  type: integer
+                  minimum: 1
+                currency:
+                  type: string
+                  enum:
+                  - usd
+                delivery_days:
+                  anyOf:
+                  - type: integer
+                  - type: 'null'
+                delivery_date:
+                  anyOf:
+                  - type: string
+                  - type: 'null'
+                delivery_date_guaranteed:
+                  anyOf:
+                  - type: boolean
+                  - type: 'null'
+              required:
+              - carrier
+              - service
+              - total_cents
+              - currency
+            available_rates:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                properties:
+                  carrier:
+                    type: string
+                  service:
+                    type: string
+                  total_cents:
+                    type: integer
+                    minimum: 1
+                  currency:
+                    type: string
+                    enum:
+                    - usd
+                  delivery_days:
+                    anyOf:
+                    - type: integer
+                    - type: 'null'
+                  delivery_date:
+                    anyOf:
+                    - type: string
+                    - type: 'null'
+                  delivery_date_guaranteed:
+                    anyOf:
+                    - type: boolean
+                    - type: 'null'
+                required:
+                - carrier
+                - service
+                - total_cents
+                - currency
+            note:
+              type: string
+          required:
+          - quote_id
+          - expires_at
+          - selected_rate
+          - available_rates
+          - note
+        error:
+          anyOf:
+          - type: string
+          - type: 'null'
+      required:
+      - order_id
+      - status
+      - payment_status
+      - fulfillment_status
+      - is_paid
+      - current_step
+      - payment_intent_id
+      - payment_channel
+      - price_usd
+      - currency
+      - product_type
+      - carrier
+      - service
+      - tracking_code
+      - status_url
+      - order_complete_url
+      - label_download_url
+      - label_download_expires_at
+      - quote
+      - error
+    MachineErrorResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+        order_id:
+          type: string
+          format: uuid
+        errors:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              path:
+                type: string
+              code:
+                type: string
+              message:
+                type: string
+              hint:
+                type: string
+              fix_examples:
+                type: array
+                items:
+                  anyOf:
+                  - type: string
+                  - type: object
+                    additionalProperties: true
+            required:
+            - path
+            - code
+            - message
+      required:
+      - message
+      - code
+    FlowerLetterPaymentRequiredResponse:
+      type: object
+      additionalProperties: true
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        request_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - payment_required
+        product_type:
+          type: string
+          enum:
+          - flower_letter
+        message:
+          type: string
+        price_breakdown:
+          anyOf:
+          - type: object
+            additionalProperties: false
+            properties:
+              product_name:
+                type: string
+              delivery_zipcode:
+                type: string
+              arrangement_price_cents:
+                type: integer
+                description: Arrangement price before Florist One delivery charges and destination tax.
+              delivery_charge_cents:
+                anyOf:
+                - type: integer
+                - type: 'null'
+              tax_total_cents:
+                anyOf:
+                - type: integer
+                - type: 'null'
+              order_total_cents:
+                type: integer
+              currency:
+                type: string
+                enum:
+                - usd
+              note:
+                type: string
+            required:
+            - product_name
+            - delivery_zipcode
+            - arrangement_price_cents
+            - delivery_charge_cents
+            - tax_total_cents
+            - order_total_cents
+            - currency
+            - note
+          - type: 'null'
+      required:
+      - order_id
+      - request_id
+      - status
+      - product_type
+      - message
+    MachineOrder:
+      type: object
+      additionalProperties: true
+      properties:
+        order_id:
+          type: string
+          format: uuid
+          description: Canonical server order id. This may differ from request_id when PostalForm reuses an existing unpaid draft.
+        status:
+          type: string
+        payment_status:
+          type: string
+        is_paid:
+          type: boolean
+        current_step:
+          anyOf:
+          - type: string
+          - type: 'null'
+        payment_intent_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        payment_channel:
+          anyOf:
+          - type: string
+          - type: 'null'
+        price_usd:
+          anyOf:
+          - type: number
+          - type: string
+          - type: 'null'
+        currency:
+          anyOf:
+          - type: string
+          - type: 'null'
+        mailpiece_type:
+          type: string
+          enum:
+          - letter
+          - postcard
+        postcard_size:
+          anyOf:
+          - type: string
+            enum:
+            - 4x6
+            - 6x9
+            - 11x6
+          - type: 'null'
+        postcard_guidelines_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+          description: Canonical postcard PDF formatting guide. Present for postcard responses and null for letter responses.
+        certified:
+          type: boolean
+        certified_return_receipt:
+          type: boolean
+        return_receipt_format:
+          type: string
+          enum:
+          - electronic
+          - physical
+        restricted_delivery:
+          type: boolean
+        err_delivery:
+          type: string
+          enum:
+          - manual
+          - email
+        err_email:
+          anyOf:
+          - type: string
+            format: email
+          - type: 'null'
+        err_status:
+          type: string
+          enum:
+          - manual
+          - pending
+          - sent
+          - failed
+        err_document_available:
+          type: boolean
+        err_delivered_at:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+        tracking_number:
+          anyOf:
+          - type: string
+          - type: 'null'
+        tracking_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+        usps_tracking_url:
+          anyOf:
+          - type: string
+            format: uri
+          - type: 'null'
+        machine_payment:
+          type: object
+          additionalProperties: true
+          properties:
+            protocol:
+              type: string
+              enum:
+              - x402
+              - mpp
+            method:
+              type: string
+            network:
+              type: string
+            recipient:
+              type: string
+            settlement_reference:
+              anyOf:
+              - type: string
+              - type: 'null'
+            settled_at:
+              anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+            testnet:
+              anyOf:
+              - type: boolean
+              - type: 'null'
+          required:
+          - protocol
+          - method
+          - network
+          - recipient
+          - settlement_reference
+          - settled_at
+        x402:
+          type: object
+          additionalProperties: false
+          properties:
+            network:
+              anyOf:
+              - type: string
+              - type: 'null'
+            pay_to:
+              anyOf:
+              - type: string
+              - type: 'null'
+            settlement_tx:
+              anyOf:
+              - type: string
+              - type: 'null'
+            settled_at:
+              anyOf:
+              - type: string
+                format: date-time
+              - type: 'null'
+          required:
+          - network
+          - pay_to
+          - settlement_tx
+          - settled_at
+        campaign_url:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Bulk campaign dashboard route for mailing_campaign orders. Null for single-recipient orders.
+      required:
+      - order_id
+      - status
+      - payment_status
+      - is_paid
+      - current_step
+      - payment_intent_id
+      - payment_channel
+      - price_usd
+      - currency
+      - mailpiece_type
+      - postcard_size
+      - postcard_guidelines_url
+      - machine_payment
+    MachineFlowerLetterRequest:
+      type: object
+      additionalProperties: false
+      description: Dedicated flower-letter payload for machine payment flows. PostalForm validates the Florist One product, ZIP delivery dates, and total before issuing a payment challenge. The requester IP is collected from the incoming request.
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: Client-generated idempotency key. Reuse the same value and exact body after a 402 challenge.
+        buyer_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        buyer_email:
+          type: string
+          format: email
+          maxLength: 100
+        note:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Message attached to the real flowers on the florist card.
+        zipcode:
+          type: string
+          pattern: ^\d{5}(?:-\d{4})?$
+          description: Recipient delivery ZIP used for Florist One catalog totals and delivery dates.
+        product_code:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Florist One product code selected from the catalog.
+        delivery_date:
+          type: string
+          format: date
+          description: Requested Florist One delivery date. The date is checked again after payment.
+        customer:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+            phone:
+              type: string
+              minLength: 1
+              maxLength: 32
+              description: US 10 digit phone number. Formatting characters are accepted.
+            address1:
+              type: string
+              minLength: 1
+              maxLength: 100
+            address2:
+              type: string
+              maxLength: 100
+            city:
+              type: string
+              minLength: 1
+              maxLength: 100
+            state:
+              type: string
+              pattern: ^[A-Z]{2}$
+            zipcode:
+              type: string
+              pattern: ^\d{5}(?:-\d{4})?$
+            country:
+              type: string
+              pattern: ^[A-Z]{2}$
+              description: Two-letter country code. Defaults to US when omitted.
+            email:
+              type: string
+              format: email
+              description: Optional customer email. Defaults to buyer_email when omitted.
+          required:
+          - name
+          - phone
+          - address1
+          - city
+          - state
+          - zipcode
+        recipient:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+            phone:
+              type: string
+              minLength: 1
+              maxLength: 32
+              description: US 10 digit phone number. Formatting characters are accepted.
+            address1:
+              type: string
+              minLength: 1
+              maxLength: 100
+            address2:
+              type: string
+              maxLength: 100
+            city:
+              type: string
+              minLength: 1
+              maxLength: 100
+            state:
+              type: string
+              pattern: ^[A-Z]{2}$
+            zipcode:
+              type: string
+              pattern: ^\d{5}(?:-\d{4})?$
+            country:
+              type: string
+              pattern: ^[A-Z]{2}$
+              description: Two-letter country code. Defaults to US when omitted.
+            institution:
+              type: string
+              maxLength: 100
+              description: Optional facility, business, or hospital name.
+          required:
+          - name
+          - phone
+          - address1
+          - city
+          - state
+          - zipcode
+        special_instructions:
+          type: string
+          maxLength: 100
+        allow_substitutions:
+          type: boolean
+          description: Defaults to true.
+      required:
+      - request_id
+      - buyer_name
+      - buyer_email
+      - note
+      - zipcode
+      - product_code
+      - delivery_date
+      - customer
+      - recipient
+      examples:
+      - request_id: 8c1a1b58-2c8f-4f4f-9c46-2c1ac32d7a1b
+        buyer_name: Agent Owner
+        buyer_email: owner@example.com
+        note: For your desk, your day, and the smile I hope this brings.
+        zipcode: '32503'
+        product_code: F1-509
+        delivery_date: '2026-05-08'
+        customer:
+          name: Agent Owner
+          phone: '8505550100'
+          address1: 123 Sender St
+          city: Pensacola
+          state: FL
+          zipcode: '32503'
+          country: US
+          email: owner@example.com
+        recipient:
+          name: Recipient Example
+          phone: '8505550199'
+          address1: 456 Recipient Ave
+          city: Pensacola
+          state: FL
+          zipcode: '32503'
+          country: US
+        allow_substitutions: true

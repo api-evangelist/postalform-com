@@ -156,6 +156,317 @@ paths:
       - Letters
 components:
   schemas:
+    WebhookEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        workspaceId:
+          type: string
+        orderId:
+          type: string
+        eventType:
+          $ref: '#/components/schemas/CustomerWebhookEventType'
+        payload:
+          $ref: '#/components/schemas/CustomerWebhookPayload'
+        createdAt:
+          type: string
+          format: date-time
+        deliveries:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDeliveryAttempt'
+    CustomerWebhookEventType:
+      type: string
+      description: Customer webhook event names emitted for fulfillment status changes. Replace `letter` with `postcard` for postcard mailpieces.
+      enum:
+      - postalform.letter.accepted
+      - postalform.letter.in_transit
+      - postalform.letter.delivered
+      - postalform.letter.returned
+      - postalform.letter.failed
+      - postalform.letter.canceled
+      - postalform.postcard.accepted
+      - postalform.postcard.in_transit
+      - postalform.postcard.delivered
+      - postalform.postcard.returned
+      - postalform.postcard.failed
+      - postalform.postcard.canceled
+      x-enumDescriptions:
+        postalform.letter.accepted: Letter accepted for production or mailing after the order leaves PostalForm's preparation queue.
+        postalform.letter.in_transit: Letter entered the mail stream. The payload may include or update `mailpiece.tracking_number` when tracking is available.
+        postalform.letter.delivered: Letter reported delivered by the carrier or delivery network.
+        postalform.letter.returned: Letter returned or otherwise marked undeliverable.
+        postalform.letter.failed: Letter could not be produced or mailed. Inspect the order timeline and retry with a corrected request when appropriate.
+        postalform.letter.canceled: Letter canceled before delivery completion.
+        postalform.postcard.accepted: Postcard accepted for production or mailing after the order leaves PostalForm's preparation queue.
+        postalform.postcard.in_transit: Postcard entered the mail stream. The payload may include or update `mailpiece.tracking_number` when tracking is available.
+        postalform.postcard.delivered: Postcard reported delivered by the carrier or delivery network.
+        postalform.postcard.returned: Postcard returned or otherwise marked undeliverable.
+        postalform.postcard.failed: Postcard could not be produced or mailed. Inspect the order timeline and retry with a corrected request when appropriate.
+        postalform.postcard.canceled: Postcard canceled before delivery completion.
+    CustomerWebhookPayload:
+      type: object
+      description: JSON body POSTed to customer webhook endpoints.
+      properties:
+        id:
+          type: string
+          example: evt_123
+        type:
+          $ref: '#/components/schemas/CustomerWebhookEventType'
+        data:
+          type: object
+          properties:
+            object:
+              $ref: '#/components/schemas/Letter'
+        mailpiece:
+          type: object
+          properties:
+            status:
+              type: string
+              nullable: true
+            tracking_number:
+              type: string
+              nullable: true
+            tracking_status:
+              type: string
+              nullable: true
+    Quote:
+      type: object
+      properties:
+        standalone_address_page:
+          type: boolean
+          description: Resolved standalone address page setting saved on this quote. Always false for postcards.
+        quote_id:
+          type: string
+        mailpiece_type:
+          type: string
+          enum:
+          - letter
+          - postcard
+        postcard_size:
+          type:
+          - string
+          - 'null'
+          enum:
+          - 4x6
+          - 6x9
+          - 11x6
+          - null
+        price_cents:
+          type: integer
+        currency:
+          type: string
+          enum:
+          - usd
+        pricing_version:
+          type: string
+        certified_return_receipt:
+          type: boolean
+        return_receipt_format:
+          type: string
+          enum:
+          - electronic
+          - physical
+        restricted_delivery:
+          type: boolean
+        err_delivery:
+          type: string
+          enum:
+          - manual
+          - email
+        err_email:
+          type:
+          - string
+          - 'null'
+          format: email
+        signature_required:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+    MailOrderEvent:
+      type: object
+      description: Customer-facing order timeline event. Internal fulfillment identifiers are not exposed.
+      properties:
+        id:
+          type: string
+        event_type:
+          type: string
+        status_before:
+          type: string
+        status_after:
+          type: string
+        source:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    CreateLetterRequest:
+      type: object
+      description: Create an order from a quote. Requires Idempotency-Key header. Sender is strongly recommended for all live mail and required for some destinations and mailpiece options.
+      properties:
+        quote_id:
+          type: string
+        recipient:
+          $ref: '#/components/schemas/MailingAddress'
+        sender:
+          $ref: '#/components/schemas/MailingAddress'
+        metadata:
+          type: object
+          description: Optional caller metadata stored on the order and surfaced in reads/webhook payloads.
+          additionalProperties: true
+      required:
+      - quote_id
+      - recipient
+    MailOrderStatus:
+      type: string
+      enum:
+      - queued
+      - document_preparing
+      - document_prepared
+      - submitted
+      - accepted
+      - in_transit
+      - delivered
+      - returned
+      - submission_pending
+      - failed
+      - canceled
+      description: Order timeline status. `submission_pending` means the fulfillment submit job entered a physical-mail safety window where PostalForm cannot blindly retry without risking duplicate mail; it requires reconciliation if it remains the current order status.
+    CreateQuoteRequest:
+      type: object
+      description: Letter quote request. API clients choose mailpiece options; PostalForm handles fulfillment automatically.
+      properties:
+        document_id:
+          type: string
+        page_count:
+          type: integer
+          minimum: 1
+          description: Optional explicit PDF page count. Used for deterministic pricing when present.
+        mail_class:
+          type: string
+          default: usps_first_class
+          description: Standard/USPS First Class by default. Accepts standard/usps_first_class, priority/usps_priority, and express/usps_express. Priority/Express cannot be combined with certified or registered proof mail.
+        color:
+          type: boolean
+          default: false
+        double_sided:
+          type: boolean
+          default: true
+        standalone_address_page:
+          type: boolean
+          description: Keep the address page on its own sheet with a blank reverse for double-sided letters, preserving the document page pairing. Omit to inherit the workspace setting (off by default); explicit true or false overrides it. Single-sided letters are unchanged. The resolved choice is fixed on the quote, and added pages or sheets are included in pricing and provider limits.
+        certified:
+          type: boolean
+          default: false
+          description: Proof-mail add-on for letters only. Eligible U.S. standard letters request USPS Certified Mail. Eligible Canada standard letters request Canada Post Registered Mail. Eligible Belgium, Switzerland, Spain, and France standard letters request the available registered-mail option for that destination.
+        certified_return_receipt:
+          type: boolean
+          default: false
+          description: Return receipt for eligible U.S. Certified Mail letters. Defaults to the electronic format when true.
+        return_receipt_format:
+          type: string
+          enum:
+          - electronic
+          - physical
+          default: electronic
+          description: Electronic selects the USPS signed proof-of-delivery PDF. Physical selects the mailed PS Form 3811 green card. Requires certified_return_receipt=true.
+        restricted_delivery:
+          type: boolean
+          default: false
+          description: Requests USPS Restricted Delivery for addressee-only delivery. Requires certified_return_receipt=true and uses the provider-managed restricted-delivery service.
+        err_delivery:
+          type: string
+          enum:
+          - manual
+          - email
+          default: manual
+          description: Manual leaves receipt retrieval to the customer through the USPS tracking link. Email makes PostalForm acquire, retain, and email the electronic receipt when available.
+        err_email:
+          type: string
+          format: email
+          maxLength: 256
+          description: Optional destination when err_delivery=email. If omitted, PostalForm uses the Projects account email. Not valid for a physical PS Form 3811.
+        signature_required:
+          type: boolean
+          default: false
+          description: Signature confirmation for eligible U.S. Priority and Express letters.
+        destination_country_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+          default: US
+          description: ISO 3166-1 alpha-2 destination country code used for quote validation and pricing. Defaults to US. First-party Projects destinations are US, CA, AT, BE, CH, DE, ES, FR, GB, IN, LU, and NL.
+        origin_country_code:
+          type: string
+          minLength: 2
+          maxLength: 2
+          default: US
+          description: ISO 3166-1 alpha-2 sender/origin country code used for quote validation and pricing. Defaults to US.
+      required:
+      - document_id
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
+    MailingAddress:
+      type: object
+      description: Flexible mailing address object. Pass countryCode, country_code, country, address_country, or addressCountry for international destinations; country defaults to US when omitted.
+      additionalProperties: true
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        line1:
+          type: string
+          description: Also accepts street1, address_line1, or addressLine1.
+        line2:
+          type: string
+          description: Also accepts street2, address_line2, or addressLine2.
+        city:
+          type: string
+          description: Also accepts address_city or addressCity.
+        state:
+          type: string
+          description: Also accepts province, provinceOrState, address_state, or addressState.
+        postal_code:
+          type: string
+          description: Also accepts postalCode, postalOrZip, zip, address_zip, or addressZip.
+        countryCode:
+          type: string
+          minLength: 2
+          maxLength: 2
+          default: US
+          description: ISO 3166-1 alpha-2 country code. Defaults to US when omitted.
+    WebhookDeliveryAttempt:
+      type: object
+      properties:
+        id:
+          type: string
+        webhookEventId:
+          type: string
+        endpointId:
+          type: string
+        attemptNumber:
+          type: integer
+        status:
+          type: string
+          enum:
+          - succeeded
+          - failed
+        httpStatus:
+          type: integer
+        responseBodySnippet:
+          type: string
+        attemptedAt:
+          type: string
+          format: date-time
+        nextRetryAt:
+          type: string
+          format: date-time
     Letter:
       type: object
       properties:
@@ -261,317 +572,6 @@ components:
           format: date-time
         idempotent_replay:
           type: boolean
-    WebhookEvent:
-      type: object
-      properties:
-        id:
-          type: string
-        workspaceId:
-          type: string
-        orderId:
-          type: string
-        eventType:
-          $ref: '#/components/schemas/CustomerWebhookEventType'
-        payload:
-          $ref: '#/components/schemas/CustomerWebhookPayload'
-        createdAt:
-          type: string
-          format: date-time
-        deliveries:
-          type: array
-          items:
-            $ref: '#/components/schemas/WebhookDeliveryAttempt'
-    MailOrderStatus:
-      type: string
-      enum:
-      - queued
-      - document_preparing
-      - document_prepared
-      - submitted
-      - accepted
-      - in_transit
-      - delivered
-      - returned
-      - submission_pending
-      - failed
-      - canceled
-      description: Order timeline status. `submission_pending` means the fulfillment submit job entered a physical-mail safety window where PostalForm cannot blindly retry without risking duplicate mail; it requires reconciliation if it remains the current order status.
-    Quote:
-      type: object
-      properties:
-        standalone_address_page:
-          type: boolean
-          description: Resolved standalone address page setting saved on this quote. Always false for postcards.
-        quote_id:
-          type: string
-        mailpiece_type:
-          type: string
-          enum:
-          - letter
-          - postcard
-        postcard_size:
-          type:
-          - string
-          - 'null'
-          enum:
-          - 4x6
-          - 6x9
-          - 11x6
-          - null
-        price_cents:
-          type: integer
-        currency:
-          type: string
-          enum:
-          - usd
-        pricing_version:
-          type: string
-        certified_return_receipt:
-          type: boolean
-        return_receipt_format:
-          type: string
-          enum:
-          - electronic
-          - physical
-        restricted_delivery:
-          type: boolean
-        err_delivery:
-          type: string
-          enum:
-          - manual
-          - email
-        err_email:
-          type:
-          - string
-          - 'null'
-          format: email
-        signature_required:
-          type: boolean
-        expires_at:
-          type: string
-          format: date-time
-    CreateLetterRequest:
-      type: object
-      description: Create an order from a quote. Requires Idempotency-Key header. Sender is strongly recommended for all live mail and required for some destinations and mailpiece options.
-      properties:
-        quote_id:
-          type: string
-        recipient:
-          $ref: '#/components/schemas/MailingAddress'
-        sender:
-          $ref: '#/components/schemas/MailingAddress'
-        metadata:
-          type: object
-          description: Optional caller metadata stored on the order and surfaced in reads/webhook payloads.
-          additionalProperties: true
-      required:
-      - quote_id
-      - recipient
-    CreateQuoteRequest:
-      type: object
-      description: Letter quote request. API clients choose mailpiece options; PostalForm handles fulfillment automatically.
-      properties:
-        document_id:
-          type: string
-        page_count:
-          type: integer
-          minimum: 1
-          description: Optional explicit PDF page count. Used for deterministic pricing when present.
-        mail_class:
-          type: string
-          default: usps_first_class
-          description: Standard/USPS First Class by default. Accepts standard/usps_first_class, priority/usps_priority, and express/usps_express. Priority/Express cannot be combined with certified or registered proof mail.
-        color:
-          type: boolean
-          default: false
-        double_sided:
-          type: boolean
-          default: true
-        standalone_address_page:
-          type: boolean
-          description: Keep the address page on its own sheet with a blank reverse for double-sided letters, preserving the document page pairing. Omit to inherit the workspace setting (off by default); explicit true or false overrides it. Single-sided letters are unchanged. The resolved choice is fixed on the quote, and added pages or sheets are included in pricing and provider limits.
-        certified:
-          type: boolean
-          default: false
-          description: Proof-mail add-on for letters only. Eligible U.S. standard letters request USPS Certified Mail. Eligible Canada standard letters request Canada Post Registered Mail. Eligible Belgium, Switzerland, Spain, and France standard letters request the available registered-mail option for that destination.
-        certified_return_receipt:
-          type: boolean
-          default: false
-          description: Return receipt for eligible U.S. Certified Mail letters. Defaults to the electronic format when true.
-        return_receipt_format:
-          type: string
-          enum:
-          - electronic
-          - physical
-          default: electronic
-          description: Electronic selects the USPS signed proof-of-delivery PDF. Physical selects the mailed PS Form 3811 green card. Requires certified_return_receipt=true.
-        restricted_delivery:
-          type: boolean
-          default: false
-          description: Requests USPS Restricted Delivery for addressee-only delivery. Requires certified_return_receipt=true and uses the provider-managed restricted-delivery service.
-        err_delivery:
-          type: string
-          enum:
-          - manual
-          - email
-          default: manual
-          description: Manual leaves receipt retrieval to the customer through the USPS tracking link. Email makes PostalForm acquire, retain, and email the electronic receipt when available.
-        err_email:
-          type: string
-          format: email
-          maxLength: 256
-          description: Optional destination when err_delivery=email. If omitted, PostalForm uses the Projects account email. Not valid for a physical PS Form 3811.
-        signature_required:
-          type: boolean
-          default: false
-          description: Signature confirmation for eligible U.S. Priority and Express letters.
-        destination_country_code:
-          type: string
-          minLength: 2
-          maxLength: 2
-          default: US
-          description: ISO 3166-1 alpha-2 destination country code used for quote validation and pricing. Defaults to US. First-party Projects destinations are US, CA, AT, BE, CH, DE, ES, FR, GB, IN, LU, and NL.
-        origin_country_code:
-          type: string
-          minLength: 2
-          maxLength: 2
-          default: US
-          description: ISO 3166-1 alpha-2 sender/origin country code used for quote validation and pricing. Defaults to US.
-      required:
-      - document_id
-    Mode:
-      type: string
-      enum:
-      - test
-      - live
-    CustomerWebhookEventType:
-      type: string
-      description: Customer webhook event names emitted for fulfillment status changes. Replace `letter` with `postcard` for postcard mailpieces.
-      enum:
-      - postalform.letter.accepted
-      - postalform.letter.in_transit
-      - postalform.letter.delivered
-      - postalform.letter.returned
-      - postalform.letter.failed
-      - postalform.letter.canceled
-      - postalform.postcard.accepted
-      - postalform.postcard.in_transit
-      - postalform.postcard.delivered
-      - postalform.postcard.returned
-      - postalform.postcard.failed
-      - postalform.postcard.canceled
-      x-enumDescriptions:
-        postalform.letter.accepted: Letter accepted for production or mailing after the order leaves PostalForm's preparation queue.
-        postalform.letter.in_transit: Letter entered the mail stream. The payload may include or update `mailpiece.tracking_number` when tracking is available.
-        postalform.letter.delivered: Letter reported delivered by the carrier or delivery network.
-        postalform.letter.returned: Letter returned or otherwise marked undeliverable.
-        postalform.letter.failed: Letter could not be produced or mailed. Inspect the order timeline and retry with a corrected request when appropriate.
-        postalform.letter.canceled: Letter canceled before delivery completion.
-        postalform.postcard.accepted: Postcard accepted for production or mailing after the order leaves PostalForm's preparation queue.
-        postalform.postcard.in_transit: Postcard entered the mail stream. The payload may include or update `mailpiece.tracking_number` when tracking is available.
-        postalform.postcard.delivered: Postcard reported delivered by the carrier or delivery network.
-        postalform.postcard.returned: Postcard returned or otherwise marked undeliverable.
-        postalform.postcard.failed: Postcard could not be produced or mailed. Inspect the order timeline and retry with a corrected request when appropriate.
-        postalform.postcard.canceled: Postcard canceled before delivery completion.
-    CustomerWebhookPayload:
-      type: object
-      description: JSON body POSTed to customer webhook endpoints.
-      properties:
-        id:
-          type: string
-          example: evt_123
-        type:
-          $ref: '#/components/schemas/CustomerWebhookEventType'
-        data:
-          type: object
-          properties:
-            object:
-              $ref: '#/components/schemas/Letter'
-        mailpiece:
-          type: object
-          properties:
-            status:
-              type: string
-              nullable: true
-            tracking_number:
-              type: string
-              nullable: true
-            tracking_status:
-              type: string
-              nullable: true
-    WebhookDeliveryAttempt:
-      type: object
-      properties:
-        id:
-          type: string
-        webhookEventId:
-          type: string
-        endpointId:
-          type: string
-        attemptNumber:
-          type: integer
-        status:
-          type: string
-          enum:
-          - succeeded
-          - failed
-        httpStatus:
-          type: integer
-        responseBodySnippet:
-          type: string
-        attemptedAt:
-          type: string
-          format: date-time
-        nextRetryAt:
-          type: string
-          format: date-time
-    MailingAddress:
-      type: object
-      description: Flexible mailing address object. Pass countryCode, country_code, country, address_country, or addressCountry for international destinations; country defaults to US when omitted.
-      additionalProperties: true
-      properties:
-        name:
-          type: string
-        company:
-          type: string
-        line1:
-          type: string
-          description: Also accepts street1, address_line1, or addressLine1.
-        line2:
-          type: string
-          description: Also accepts street2, address_line2, or addressLine2.
-        city:
-          type: string
-          description: Also accepts address_city or addressCity.
-        state:
-          type: string
-          description: Also accepts province, provinceOrState, address_state, or addressState.
-        postal_code:
-          type: string
-          description: Also accepts postalCode, postalOrZip, zip, address_zip, or addressZip.
-        countryCode:
-          type: string
-          minLength: 2
-          maxLength: 2
-          default: US
-          description: ISO 3166-1 alpha-2 country code. Defaults to US when omitted.
-    MailOrderEvent:
-      type: object
-      description: Customer-facing order timeline event. Internal fulfillment identifiers are not exposed.
-      properties:
-        id:
-          type: string
-        event_type:
-          type: string
-        status_before:
-          type: string
-        status_after:
-          type: string
-        source:
-          type: string
-        created_at:
-          type: string
-          format: date-time
   parameters:
     OrderId:
       name: order_id

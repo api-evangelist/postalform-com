@@ -144,43 +144,17 @@ paths:
       - Credits
 components:
   schemas:
-    CreditCheckoutSession:
+    CreditBalanceSnapshot:
       type: object
       properties:
-        id:
-          type: string
-          description: PostalForm top-up ID.
-        mode:
-          type: string
-          enum:
-          - stripe_checkout
-          - local_checkout_stub
-        checkout_url:
-          type: string
-          format: uri
-        amount_cents:
+        available_cents:
+          type: integer
+        reserved_cents:
           type: integer
         currency:
           type: string
-    CreditAutoRefillRequest:
-      type: object
-      properties:
-        mode:
-          $ref: '#/components/schemas/Mode'
-        enabled:
-          type: boolean
-          default: true
-        threshold_cents:
-          type: integer
-          minimum: 100
-          maximum: 100000
-        refill_amount_cents:
-          type: integer
-          minimum: 100
-          maximum: 100000
-      required:
-      - threshold_cents
-      - refill_amount_cents
+        status:
+          type: string
     CreditAutoRefillPolicy:
       type: object
       properties:
@@ -255,33 +229,24 @@ components:
           $ref: '#/components/schemas/CreditBalanceSnapshot'
         auto_refill:
           $ref: '#/components/schemas/CreditAutoRefillPolicies'
-    Mode:
-      type: string
-      enum:
-      - test
-      - live
-    CreditAutoRefillPolicies:
+    CreditCheckoutSession:
       type: object
       properties:
-        data:
-          type: object
-          properties:
-            test:
-              anyOf:
-              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
-              - type: 'null'
-            live:
-              anyOf:
-              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
-              - type: 'null'
-        test:
-          anyOf:
-          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
-          - type: 'null'
-        live:
-          anyOf:
-          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
-          - type: 'null'
+        id:
+          type: string
+          description: PostalForm top-up ID.
+        mode:
+          type: string
+          enum:
+          - stripe_checkout
+          - local_checkout_stub
+        checkout_url:
+          type: string
+          format: uri
+        amount_cents:
+          type: integer
+        currency:
+          type: string
     CreditLedgerEntry:
       type: object
       properties:
@@ -362,17 +327,33 @@ components:
         last_used_at:
           type: string
           format: date-time
-    CreditBalanceSnapshot:
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
+    CreditAutoRefillPolicies:
       type: object
       properties:
-        available_cents:
-          type: integer
-        reserved_cents:
-          type: integer
-        currency:
-          type: string
-        status:
-          type: string
+        data:
+          type: object
+          properties:
+            test:
+              anyOf:
+              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+              - type: 'null'
+            live:
+              anyOf:
+              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+              - type: 'null'
+        test:
+          anyOf:
+          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+          - type: 'null'
+        live:
+          anyOf:
+          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+          - type: 'null'
     PaymentMethodSetupSession:
       type: object
       properties:
@@ -384,6 +365,25 @@ components:
         checkout_url:
           type: string
           format: uri
+    CreditAutoRefillRequest:
+      type: object
+      properties:
+        mode:
+          $ref: '#/components/schemas/Mode'
+        enabled:
+          type: boolean
+          default: true
+        threshold_cents:
+          type: integer
+          minimum: 100
+          maximum: 100000
+        refill_amount_cents:
+          type: integer
+          minimum: 100
+          maximum: 100000
+      required:
+      - threshold_cents
+      - refill_amount_cents
   securitySchemes:
     bearerAuth:
       type: http
