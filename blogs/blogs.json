@@ -1,0 +1,28 @@
+{
+  "repo": "postalform-com",
+  "feeds": [
+    {
+      "source": "https://blog.postalform.com/",
+      "feed_url": "https://blog.postalform.com/rss.xml",
+      "title": "",
+      "saved": 0,
+      "method": "discovered"
+    },
+    {
+      "source": "https://postalform.com/help",
+      "feed_url": "https://postalform.com/help",
+      "title": "",
+      "saved": 0,
+      "method": "none"
+    },
+    {
+      "source": "https://blog.postalform.com/rss.xml",
+      "feed_url": "https://blog.postalform.com/rss.xml",
+      "title": "",
+      "saved": 0,
+      "method": "feed"
+    }
+  ],
+  "post_count": 14,
+  "fetched": "2026-10-03T12:30:02Z"
+}

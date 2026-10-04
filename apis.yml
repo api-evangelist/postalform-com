@@ -121,6 +121,8 @@ apis:
   humanURL: https://postalform.com/developers
   baseURL: https://postalform.com/api/machine
   tags:
+  - APIKeys
+  tags_raw:
   - Api Keys
   properties:
   - type: OpenAPI
@@ -145,6 +147,8 @@ apis:
   humanURL: https://postalform.com/developers
   baseURL: https://postalform.com/api/machine
   tags:
+  - Credit
+  tags_raw:
   - Credits
   properties:
   - type: OpenAPI
@@ -337,6 +341,9 @@ maintainers:
 - FN: APIs.json
   email: info@apis.io
 common:
+- type: CapabilityMap
+  url: capabilities/postalform-com-capability-edges.yml
+  name: PostalForm Business Capability Map
 - type: Overlay
   url: overlays/postalform-com-machine-payments-overlay.yaml
 - type: Overlay
