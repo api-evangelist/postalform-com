@@ -65,3 +65,31 @@ plans:
   source: https://postalform.com/developer-mail-api.md; per-piece prices at https://projects.postalform.com/pricing (JS-rendered calculator, not extracted)
   limits: ['25 MiB PDF upload', 'return-receipt export 500 receipts or 25 MiB']
 enterprise: 'No enterprise or volume tier is published. Bulk mailing campaigns (CSV recipients) use the same per-piece pricing.'
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - negotiated
+  units: []
+  plans:
+  - name: Pay per order (web, MCP hosted checkout)
+    access: other
+    model: unstated
+    model_how: derived
+    units: []
+    periods:
+    - other
+  - name: Machine payments (x402 / MPP)
+    access: other
+    model: unstated
+    model_how: derived
+    units: []
+    periods:
+    - other
+  - name: PostalForm Projects (API keys, prepaid credits)
+    access: other
+    model: negotiated
+    model_how: derived
+    units: []
+    periods:
+    - other
