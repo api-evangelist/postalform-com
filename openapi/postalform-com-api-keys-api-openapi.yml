@@ -66,6 +66,11 @@ components:
           description: Full API key secret. Returned once.
         api_key_prefix:
           type: string
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
     ApiKey:
       type: object
       properties:
@@ -87,11 +92,6 @@ components:
         last_used_at:
           type: string
           format: date-time
-    Mode:
-      type: string
-      enum:
-      - test
-      - live
   securitySchemes:
     bearerAuth:
       type: http

@@ -144,109 +144,25 @@ paths:
       - Credits
 components:
   schemas:
-    CreditBalanceSnapshot:
+    CreditAutoRefillRequest:
       type: object
       properties:
-        available_cents:
-          type: integer
-        reserved_cents:
-          type: integer
-        currency:
-          type: string
-        status:
-          type: string
-    CreditAutoRefillPolicy:
-      type: object
-      properties:
-        id:
-          type: string
-        workspace_id:
-          type: string
         mode:
           $ref: '#/components/schemas/Mode'
-        billing_rail:
-          type: string
-          enum:
-          - mock_test_credits
-          - prepaid_credits
         enabled:
           type: boolean
+          default: true
         threshold_cents:
           type: integer
+          minimum: 100
+          maximum: 100000
         refill_amount_cents:
           type: integer
-        provider:
-          type: string
-          enum:
-          - test_grant
-          - stripe_checkout
-          - local_checkout_stub
-        status:
-          type: string
-          enum:
-          - active
-          - disabled
-          - payment_action_required
-          - payment_pending
-          - payment_failed
-        last_triggered_at:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-    CreditBalance:
-      type: object
-      properties:
-        mode:
-          type: string
-          enum:
-          - test
-          - live
-        billing_rail:
-          type: string
-          enum:
-          - mock_test_credits
-          - prepaid_credits
-          - future_projects_spt
-          - future_metronome_streaming
-          - future_mpp_tempo
-          - manual_invoice
-        available_cents:
-          type: integer
-        reserved_cents:
-          type: integer
-        currency:
-          type: string
-        status:
-          type: string
-        test:
-          $ref: '#/components/schemas/CreditBalanceSnapshot'
-        live:
-          $ref: '#/components/schemas/CreditBalanceSnapshot'
-        auto_refill:
-          $ref: '#/components/schemas/CreditAutoRefillPolicies'
-    CreditCheckoutSession:
-      type: object
-      properties:
-        id:
-          type: string
-          description: PostalForm top-up ID.
-        mode:
-          type: string
-          enum:
-          - stripe_checkout
-          - local_checkout_stub
-        checkout_url:
-          type: string
-          format: uri
-        amount_cents:
-          type: integer
-        currency:
-          type: string
+          minimum: 100
+          maximum: 100000
+      required:
+      - threshold_cents
+      - refill_amount_cents
     CreditLedgerEntry:
       type: object
       properties:
@@ -294,6 +210,147 @@ components:
         created_at:
           type: string
           format: date-time
+    CreditCheckoutSession:
+      type: object
+      properties:
+        id:
+          type: string
+          description: PostalForm top-up ID.
+        mode:
+          type: string
+          enum:
+          - stripe_checkout
+          - local_checkout_stub
+        checkout_url:
+          type: string
+          format: uri
+        amount_cents:
+          type: integer
+        currency:
+          type: string
+    CreditBalanceSnapshot:
+      type: object
+      properties:
+        available_cents:
+          type: integer
+        reserved_cents:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+    PaymentMethodSetupSession:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+          - stripe_checkout
+          - local_checkout_stub
+        checkout_url:
+          type: string
+          format: uri
+    CreditBalance:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum:
+          - test
+          - live
+        billing_rail:
+          type: string
+          enum:
+          - mock_test_credits
+          - prepaid_credits
+          - future_projects_spt
+          - future_metronome_streaming
+          - future_mpp_tempo
+          - manual_invoice
+        available_cents:
+          type: integer
+        reserved_cents:
+          type: integer
+        currency:
+          type: string
+        status:
+          type: string
+        test:
+          $ref: '#/components/schemas/CreditBalanceSnapshot'
+        live:
+          $ref: '#/components/schemas/CreditBalanceSnapshot'
+        auto_refill:
+          $ref: '#/components/schemas/CreditAutoRefillPolicies'
+    Mode:
+      type: string
+      enum:
+      - test
+      - live
+    CreditAutoRefillPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+        workspace_id:
+          type: string
+        mode:
+          $ref: '#/components/schemas/Mode'
+        billing_rail:
+          type: string
+          enum:
+          - mock_test_credits
+          - prepaid_credits
+        enabled:
+          type: boolean
+        threshold_cents:
+          type: integer
+        refill_amount_cents:
+          type: integer
+        provider:
+          type: string
+          enum:
+          - test_grant
+          - stripe_checkout
+          - local_checkout_stub
+        status:
+          type: string
+          enum:
+          - active
+          - disabled
+          - payment_action_required
+          - payment_pending
+          - payment_failed
+        last_triggered_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreditAutoRefillPolicies:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            test:
+              anyOf:
+              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+              - type: 'null'
+            live:
+              anyOf:
+              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+              - type: 'null'
+        test:
+          anyOf:
+          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+          - type: 'null'
+        live:
+          anyOf:
+          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
+          - type: 'null'
     BillingPaymentMethod:
       type: object
       properties:
@@ -327,63 +384,6 @@ components:
         last_used_at:
           type: string
           format: date-time
-    Mode:
-      type: string
-      enum:
-      - test
-      - live
-    CreditAutoRefillPolicies:
-      type: object
-      properties:
-        data:
-          type: object
-          properties:
-            test:
-              anyOf:
-              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
-              - type: 'null'
-            live:
-              anyOf:
-              - $ref: '#/components/schemas/CreditAutoRefillPolicy'
-              - type: 'null'
-        test:
-          anyOf:
-          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
-          - type: 'null'
-        live:
-          anyOf:
-          - $ref: '#/components/schemas/CreditAutoRefillPolicy'
-          - type: 'null'
-    PaymentMethodSetupSession:
-      type: object
-      properties:
-        mode:
-          type: string
-          enum:
-          - stripe_checkout
-          - local_checkout_stub
-        checkout_url:
-          type: string
-          format: uri
-    CreditAutoRefillRequest:
-      type: object
-      properties:
-        mode:
-          $ref: '#/components/schemas/Mode'
-        enabled:
-          type: boolean
-          default: true
-        threshold_cents:
-          type: integer
-          minimum: 100
-          maximum: 100000
-        refill_amount_cents:
-          type: integer
-          minimum: 100
-          maximum: 100000
-      required:
-      - threshold_cents
-      - refill_amount_cents
   securitySchemes:
     bearerAuth:
       type: http
