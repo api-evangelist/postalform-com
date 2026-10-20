@@ -118,9 +118,9 @@ servers:
       status: 404
 tools:
 - name: postalform.list_forms
-  title: List available forms
   description: Use this when you need the published single-mailpiece PostalForm workflow catalog available
     to agents. Coordinated statutory multi-recipient workflows are excluded.
+  title: List available forms
   annotations:
     readOnlyHint: true
     destructiveHint: false
@@ -132,9 +132,9 @@ tools:
   - cursor
   required: []
 - name: postalform.get_form_schema
-  title: Get form schema
   description: Use this when you need a machine-usable schema for one supported single-mailpiece PostalForm
     workflow (fields, groups, attachments, and dependencies).
+  title: Get form schema
   annotations:
     readOnlyHint: true
     destructiveHint: false
@@ -145,9 +145,11 @@ tools:
   required:
   - slug
 - name: postalform.search_addresses
+  description: Use this to search for a mailing address and return Loqate suggestions with IDs. Pass country_code
+    to filter by country; it defaults to US. If a suggestion has type "Container" (building/complex),
+    call this tool again with container=<id> and a refined query to drill down to type "Address". Only
+    type "Address" is valid for order creation.
   title: Search mailing addresses
-  description: Search for a mailing address and return Loqate suggestions with IDs; country_code defaults
-    to US; drill into Container results with container=<id>.
   annotations:
     readOnlyHint: true
     destructiveHint: false
@@ -161,9 +163,10 @@ tools:
   required:
   - query
 - name: postalform.create_pdf_upload
+  description: Use this when the host cannot provide a PDF file param directly. It creates a short-lived
+    PDF upload URL and upload token (multipart/form-data, file field). Let the HTTP client generate Content-Type
+    with its multipart boundary.
   title: Create a PDF upload
-  description: Creates a short-lived PDF upload URL and upload token (multipart/form-data, file field)
-    for hosts that cannot pass a PDF file param directly.
   annotations:
     readOnlyHint: false
     destructiveHint: false
@@ -174,9 +177,12 @@ tools:
   - content_length
   required: []
 - name: postalform.create_order_draft
-  title: Create a mail order draft
   description: Prepare an existing PDF for mailing and return the order ID, total, hosted checkout URL,
-    and checkout session. No mail is sent until checkout completes.
+    and checkout session. After buyer approval, a compatible client can pass a Stripe shared payment token
+    to complete_checkout; otherwise present the hosted checkout URL. To prepare for MPP, set payment_protocol=mpp
+    and buyer_email; receive a PDF preview, hosted checkout_url fallback and MPP challenge, then use postalform.pay_order
+    with the order_id after buyer approval. Draft creation never pays. For x402, use postalform.create_machine_order.
+  title: Create a mail order draft
   annotations:
     readOnlyHint: false
     destructiveHint: false
@@ -206,9 +212,9 @@ tools:
   - recipient_name
   - recipient_address_type
 - name: postalform.preview_letter_order_draft
+  description: Use this to prepare a non-writing preview for a mailed letter before creating checkout.
+    It renders the letter, validates the addresses, and returns a widget with a create-draft action.
   title: Preview a mail order draft from letter text
-  description: Non-writing preview for a mailed letter before creating checkout; renders the letter, validates
-    the addresses, returns a widget with a create-draft action.
   annotations:
     readOnlyHint: true
     destructiveHint: false
@@ -237,9 +243,14 @@ tools:
   - recipient_name
   - recipient_address_type
 - name: postalform.create_letter_order_draft
+  description: Prepare letter text for mailing and return the order ID, total, hosted checkout URL, and
+    checkout session. Accepts text directly; no PDF upload or browser is needed. Letter drafts may include
+    typed or drawn signatures. After buyer approval, a compatible client can use complete_checkout with
+    a Stripe shared payment token; otherwise present the hosted checkout URL. To prepare for MPP, set
+    payment_protocol=mpp and buyer_email; receive a PDF preview, hosted checkout_url fallback and MPP
+    challenge, then use postalform.pay_order with the order_id after buyer approval. Draft creation never
+    pays. For x402, use postalform.create_machine_order.
   title: Create a mail order draft from letter text
-  description: Prepare letter text for mailing (server renders the PDF; typed or drawn signatures allowed)
-    and return the order ID, total, hosted checkout URL, and checkout session.
   annotations:
     readOnlyHint: false
     destructiveHint: false
@@ -268,9 +279,13 @@ tools:
   - recipient_name
   - recipient_address_type
 - name: postalform.create_form_order_draft
-  title: Create a mail order draft from a workflow form submission
   description: Prepare a supported workflow form for mailing and return the order ID, total, hosted checkout
-    URL, and checkout session.
+    URL, and checkout session. After buyer approval, a compatible client can use complete_checkout with
+    a Stripe shared payment token; otherwise present the hosted checkout URL. To prepare for MPP, set
+    payment_protocol=mpp and buyer_email; receive a PDF preview, hosted checkout_url fallback and MPP
+    challenge, then use postalform.pay_order with the order_id after buyer approval. Draft creation never
+    pays. For x402, use postalform.create_machine_order.
+  title: Create a mail order draft from a workflow form submission
   annotations:
     readOnlyHint: false
     destructiveHint: false
@@ -300,10 +315,16 @@ tools:
   - sender_name
   - sender_address_type
 - name: postalform.create_machine_order
+  description: Create a single PDF, letter, workflow-form order, or bulk letter campaign and pay through
+    MPP or x402 after buyer approval. For bulk, provide exactly one of bulk.csv_content or bulk.recipients
+    (JSON address objects with optional merge_fields), plus a shared PDF or text/HTML template. Omit top-level
+    recipient fields and review campaign_url, recipient count and total. Bulk MPP orders can also use
+    postalform.pay_order after fetching its challenge. The unpaid response also includes checkout_url
+    and status_url for this same order. Without an available compatible wallet, give the buyer checkout_url
+    and poll status_url; never recreate the order to change payment paths. Single-recipient clients with
+    a Stripe shared payment token can instead use a draft tool followed by complete_checkout; other clients
+    should present the hosted checkout URL.
   title: Create or pay a machine order
-  description: Create an order from a PDF, letter, or workflow form and pay through an MPP or x402 challenge
-    after buyer approval; first call returns the challenge, the retry carries payment_authorization (MPP)
-    or payment_signature (x402).
   annotations:
     readOnlyHint: false
     destructiveHint: false
@@ -341,11 +362,21 @@ tools:
   - buyer_email
   - sender_name
   - recipient_name
+- name: postalform.pay_order
+  description: Get an MPP challenge or pay an existing MPP PDF, letter, workflow-form order, or bulk letter
+    campaign after buyer approval. Use the order_id returned by any draft tool with payment_protocol=mpp
+    or by create_machine_order. When switching from create_machine_order, omit the credential first to
+    get this payment endpoint’s challenge. Review the preview or campaign_url, recipient count and total.
+    No document or addresses are resubmitted. Without payment_authorization this only returns a challenge;
+    with it, this can pay and send real mail. Reuse the same order_id on retries and follow the returned
+    payment status.
 - name: complete_checkout
+  description: After the buyer approves the prepared order and total, pay its existing checkout session
+    using a compatible Stripe payment token, including a shared payment token (spt_...). Pass the order
+    ID as checkout_session_id; do not resend the document or addresses. On an interrupted request, retry
+    the same checkout and token. Existing authorized, processing, or paid payments are reused; follow
+    the returned status and messages.
   title: Pay a prepared checkout
-  description: After buyer approval, pay the existing checkout session with a compatible Stripe payment
-    token (shared payment token spt_...); retry an interrupted request with the same checkout_session_id
-    and token.
   annotations:
     readOnlyHint: false
     destructiveHint: false
@@ -358,9 +389,12 @@ tools:
   - buyer
   - payment_data
 - name: postalform.get_order_status
-  title: Get order status
   description: Read payment, processing, stored mailing/carrier status, the latest 50 public tracking
-    events, and electronic return receipt availability. This read does not pay, mail, or acquire receipts.
+    events, and electronic return receipt availability. Bulk orders also return campaign_url, recipient
+    count and per-status counts; use the campaign dashboard for individual recipients. Missing carrier
+    evidence is null; processing or a tracking number alone does not prove mailing or delivery. This read
+    does not pay, mail, or acquire receipts.
+  title: Get order status
   annotations:
     readOnlyHint: true
     destructiveHint: false
@@ -371,8 +405,8 @@ tools:
   required:
   - order_id
 - name: postalform.ping
+  description: Use this when you want a quick health check that the PostalForm MCP server is reachable.
   title: Ping PostalForm
-  description: Quick health check that the PostalForm MCP server is reachable.
   annotations:
     readOnlyHint: true
     destructiveHint: false
@@ -450,3 +484,4 @@ tool_quality:
   scored: false
   note: Facts from the saved tools/list capture (mcp_tool_quality.py); recorded, not scored. Checks learned
     from Glimind's agent-readiness audit.
+tools_count: 13
