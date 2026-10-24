@@ -18,6 +18,9 @@ artifacts:
   authentication/postalform-com-authentication.yml:
     method: searched
     evidence: declared in the artifact
+  capabilities/postalform-com-capability-edges.yml:
+    method: unknown
+    evidence: no authorship recorded
   changelog/postalform-com-changelog.yml:
     method: searched
     evidence: declared in the artifact
@@ -36,7 +39,13 @@ artifacts:
   front-door-ai/2026-09-17.yml:
     method: unknown
     evidence: no authorship recorded
-  kin/checks-2026-09-24T161608.yml:
+  integrations/_index.yml:
+    method: generated
+    evidence: carries an API Evangelist house phrase
+  integrations/postalform-com-integration-edges.yml:
+    method: searched
+    evidence: declared in the artifact
+  kin/checks-2026-10-11T110117.yml:
     method: generated
     evidence: Kin Score snapshot written by score.rb
   kin/score-2026-09-19T193153.yml:
@@ -69,6 +78,21 @@ artifacts:
   kin/score-2026-09-24T161608.yml:
     method: generated
     evidence: Kin Score snapshot written by score.rb
+  kin/score-2026-09-25T210408.yml:
+    method: generated
+    evidence: Kin Score snapshot written by score.rb
+  kin/score-2026-09-25T232841.yml:
+    method: generated
+    evidence: Kin Score snapshot written by score.rb
+  kin/score-2026-10-03T000835.yml:
+    method: generated
+    evidence: Kin Score snapshot written by score.rb
+  kin/score-2026-10-03T024842.yml:
+    method: generated
+    evidence: Kin Score snapshot written by score.rb
+  kin/score-2026-10-11T110117.yml:
+    method: generated
+    evidence: Kin Score snapshot written by score.rb
   lifecycle/postalform-com-lifecycle.yml:
     method: searched
     evidence: declared in the artifact
@@ -84,18 +108,47 @@ artifacts:
   mcp/postalform-com-tool-crosswalk.yml:
     method: derived
     evidence: declared in the artifact
-  openapi/postalform-com-machine-payments-openapi.json:
-    method: unknown
-    evidence: no authorship recorded
-  openapi/postalform-com-projects-openapi.json:
-    method: unknown
-    evidence: no authorship recorded
+  openapi/_original/postalform-com-machine-payments-openapi.json:
+    method: harvested
+    evidence: the same operations as https://postalform.com/openapi.json (sha256 2bfa91365887, fetched
+      2026-10-04)
+  openapi/_original/postalform-com-projects-openapi.json:
+    method: harvested
+    evidence: found in openapi/_original/; the fetch URL and bytes were not recorded, so byte-identity
+      to the provider's source is unverified
+  openapi/postalform-com-api-keys-api-openapi.yml:
+    method: derived
+    evidence: paths are a subset of openapi/_original/ (split from the harvested spec)
+  openapi/postalform-com-credits-api-openapi.yml:
+    method: derived
+    evidence: paths are a subset of openapi/_original/ (split from the harvested spec)
+  openapi/postalform-com-documents-api-openapi.yml:
+    method: derived
+    evidence: paths are a subset of openapi/_original/ (split from the harvested spec)
+  openapi/postalform-com-letters-api-openapi.yml:
+    method: derived
+    evidence: paths are a subset of openapi/_original/ (split from the harvested spec)
+  openapi/postalform-com-machine-api-openapi.yml:
+    method: derived
+    evidence: paths are a subset of openapi/_original/ (split from the harvested spec)
+  openapi/postalform-com-postcards-api-openapi.yml:
+    method: derived
+    evidence: paths are a subset of openapi/_original/ (split from the harvested spec)
+  openapi/postalform-com-return-receipts-api-openapi.yml:
+    method: derived
+    evidence: paths are a subset of openapi/_original/ (split from the harvested spec)
+  openapi/postalform-com-webhook-endpoints-api-openapi.yml:
+    method: derived
+    evidence: paths are a subset of openapi/_original/ (split from the harvested spec)
+  openapi/postalform-com-webhook-events-api-openapi.yml:
+    method: derived
+    evidence: paths are a subset of openapi/_original/ (split from the harvested spec)
   overlays/postalform-com-machine-payments-overlay.yaml:
-    method: generated
-    evidence: declared in the artifact
+    method: derived
+    evidence: an API Evangelist overlay (title) over the provider's contract
   overlays/postalform-com-projects-overlay.yaml:
-    method: generated
-    evidence: declared in the artifact
+    method: derived
+    evidence: an API Evangelist overlay (title) over the provider's contract
   packages/postalform-com-packages.yml:
     method: searched
     evidence: declared in the artifact
